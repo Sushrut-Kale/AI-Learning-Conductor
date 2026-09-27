@@ -14,11 +14,15 @@ from models import (
     LearningFingerprint,
     ClassroomLearningMap,
     SyncBatchRequest,
-    TeacherOverrideRequest
+    TeacherOverrideRequest,
+    DiagnosticAnalysis,
+    DiagnosticResponse,
+    ClassroomDiagnosticOverview
 )
 from database import db
 from ai_service import generate_learning_fingerprint_ai, GEMINI_API_KEY
 from assessment_content import get_foundational_assessments
+from diagnostic_engine import update_diagnostic_analysis_with_check
 
 app = FastAPI(
     title="AI Learning Conductor - Phase 1 API",
@@ -368,3 +372,99 @@ async def offline_sync(batch: SyncBatchRequest):
 async def reset_demo_data():
     db._seed_demo_data()
     return {"status": "demo_data_reset_successful"}
+
+# ============================================================
+# PHASE 2: DIAGNOSTIC & NEXT LEARNING MOVE ENDPOINTS
+# ============================================================
+
+@app.get("/api/students/{student_id}/diagnostics", response_model=DiagnosticAnalysis)
+async def get_student_diagnostics(student_id: str, skill_id: Optional[str] = None):
+    """
+    Phase 2: Learning Gap Analysis & Pattern Extraction for a student.
+    Returns:
+    - Observed Pattern
+    - Hypotheses (Primary and Alternative) with Confidence & Prerequisite
+    - Targeted Diagnostic Check (3 tasks)
+    - Next Learning Move
+    - Diagnostic History
+    """
+    analysis = db.get_student_diagnostic(student_id, skill_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Diagnostic analysis could not be generated for this student.")
+    return analysis
+
+@app.post("/api/students/{student_id}/diagnostics/analyse", response_model=DiagnosticAnalysis)
+async def reanalyse_student_diagnostics(student_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Triggers fresh diagnostic reasoning over the student's latest assessment evidence.
+    """
+    skill_id = payload.get("skill_id")
+    # Clear cache and re-run
+    analysis = db.get_student_diagnostic(student_id, skill_id)
+    return analysis
+
+@app.post("/api/diagnostics/{student_id}/checks")
+async def submit_diagnostic_check(student_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Executes the Phase 2 Diagnostic Loop (Section 16 & 35):
+    - Submits targeted diagnostic check task responses
+    - AI compares new evidence against hypothesis
+    - Updates hypothesis status to SUPPORTED or WEAKENED
+    - Updates Next Learning Move
+    """
+    analysis = db.get_student_diagnostic(student_id, payload.get("skill_id"))
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Diagnostic analysis not found")
+
+    responses_data = payload.get("responses", [])
+    check_responses = [DiagnosticResponse(**r) for r in responses_data]
+
+    updated_analysis = update_diagnostic_analysis_with_check(analysis, check_responses)
+    db.save_diagnostic(student_id, updated_analysis)
+
+    return {
+        "status": "diagnostic_updated",
+        "student_id": student_id,
+        "hypothesis_status": updated_analysis.status,
+        "score_summary": updated_analysis.next_diagnostic_check.score_summary,
+        "analysis": updated_analysis
+    }
+
+@app.post("/api/diagnostics/{student_id}/override")
+async def override_diagnostic_hypothesis(student_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Teacher Control (Section 36):
+    Allows teacher to accept, reject, mark 'Needs more evidence', or override the AI hypothesis.
+    """
+    analysis = db.get_student_diagnostic(student_id, payload.get("skill_id"))
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Diagnostic analysis not found")
+
+    action = payload.get("action", "accept")  # accept, reject, needs_more_evidence
+    note = payload.get("teacher_note", "")
+
+    primary_hyp = analysis.hypotheses[0]
+    if action == "accept":
+        primary_hyp.status = "supported"
+        analysis.status = "supported"
+    elif action == "reject":
+        primary_hyp.status = "weakened"
+        analysis.status = "weakened"
+    elif action == "needs_more_evidence":
+        primary_hyp.status = "unresolved"
+        analysis.status = "unresolved"
+
+    analysis.teacher_override_note = note
+    db.save_diagnostic(student_id, analysis)
+
+    return {"status": "override_recorded", "analysis": analysis}
+
+@app.get("/api/classes/{class_id}/diagnostic-overview", response_model=ClassroomDiagnosticOverview)
+async def get_classroom_diagnostic_overview(class_id: str):
+    """
+    Classroom Diagnostic Overview (Section 12, 19, 30):
+    Clustered observed learning patterns across the classroom without dynamic grouping.
+    """
+    overview = db.get_classroom_diagnostics(class_id)
+    return overview
+

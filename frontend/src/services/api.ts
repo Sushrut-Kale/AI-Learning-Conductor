@@ -359,6 +359,181 @@ class ApiService {
     await localDb.responses.clear();
     await localDb.syncQueue.clear();
   }
+
+  // ============================================================
+  // PHASE 2: DIAGNOSTIC & NEXT LEARNING MOVE METHODS
+  // ============================================================
+
+  async getStudentDiagnostics(studentId: string, skillId?: string): Promise<DiagnosticAnalysis> {
+    const url = skillId 
+      ? `${API_BASE}/students/${studentId}/diagnostics?skill_id=${skillId}`
+      : `${API_BASE}/students/${studentId}/diagnostics`;
+    
+    if (this.isOffline()) {
+      // Local fallback
+      const cached = localStorage.getItem(`DIAG_${studentId}`);
+      if (cached) return JSON.parse(cached);
+    }
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Diagnostic fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`DIAG_${studentId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`DIAG_${studentId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async submitDiagnosticCheck(studentId: string, payload: { skill_id?: string; responses: any[] }): Promise<any> {
+    if (this.isOffline()) {
+      await localDb.syncQueue.add({
+        type: 'response',
+        payload: { studentId, ...payload },
+        created_at: new Date().toISOString()
+      });
+      return { status: 'queued_offline' };
+    }
+
+    const res = await fetch(`${API_BASE}/diagnostics/${studentId}/checks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.analysis) {
+      localStorage.setItem(`DIAG_${studentId}`, JSON.stringify(data.analysis));
+    }
+    return data;
+  }
+
+  async overrideDiagnosticHypothesis(studentId: string, payload: { skill_id?: string; action: string; teacher_note: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/diagnostics/${studentId}/override`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.analysis) {
+      localStorage.setItem(`DIAG_${studentId}`, JSON.stringify(data.analysis));
+    }
+    return data;
+  }
+
+  async getClassroomDiagnosticOverview(classId: string): Promise<ClassroomDiagnosticOverview> {
+    const res = await fetch(`${API_BASE}/classes/${classId}/diagnostic-overview`);
+    return await res.json();
+  }
+}
+
+// Phase 2 Type Definitions
+export interface DiagnosticCheckTask {
+  id: string;
+  prompt: string;
+  expected_response: string;
+  instructions_for_teacher: string;
+  prerequisite_skill: string;
+}
+
+export interface DiagnosticResponse {
+  task_id: string;
+  student_response: string;
+  correct: boolean;
+  teacher_observation?: string;
+}
+
+export interface DiagnosticCheck {
+  id: string;
+  hypothesis_id: string;
+  prerequisite_skill: string;
+  purpose: string;
+  tasks: DiagnosticCheckTask[];
+  status: 'pending' | 'completed';
+  responses: DiagnosticResponse[];
+  score_summary?: string;
+}
+
+export interface EvidencePattern {
+  id: string;
+  description: string;
+  evidence_summary: string;
+  supporting_task_ids: string[];
+  successful_task_ids: string[];
+  failed_task_ids: string[];
+  teacher_observations: string[];
+}
+
+export interface Hypothesis {
+  id: string;
+  hypothesis_type: 'primary' | 'alternative';
+  description: string;
+  confidence: 'High' | 'Medium' | 'Low';
+  confidence_rationale: string;
+  status: 'open' | 'supported' | 'weakened' | 'unresolved';
+  prerequisite_skill: string;
+  supporting_evidence: string[];
+  evidence_needed_to_confirm: string;
+}
+
+export interface NextLearningMove {
+  id: string;
+  description: string;
+  rationale: string;
+  prerequisite_focus: string;
+  instructional_step: string;
+}
+
+export interface DiagnosticHistoryEntry {
+  timestamp: string;
+  event: string;
+  previous_status: string;
+  updated_status: string;
+  evidence_added: string;
+  interpretation: string;
+}
+
+export interface DiagnosticAnalysis {
+  id: string;
+  student_id: string;
+  student_name: string;
+  skill_id: string;
+  skill_title: string;
+  domain: 'reading' | 'numeracy';
+  created_at: string;
+  status: 'open' | 'supported' | 'weakened' | 'unresolved';
+  observed_performance: string;
+  observed_pattern: EvidencePattern;
+  hypotheses: Hypothesis[];
+  next_diagnostic_check: DiagnosticCheck;
+  next_learning_move: NextLearningMove;
+  diagnostic_history: DiagnosticHistoryEntry[];
+  teacher_override_note?: string;
+}
+
+export interface ClassroomDiagnosticPattern {
+  pattern_id: string;
+  skill_id: string;
+  skill_title: string;
+  domain: 'reading' | 'numeracy';
+  pattern_summary: string;
+  student_count: number;
+  students: { id: string; name: string; roll_number: string }[];
+  potential_shared_prerequisite: string;
+  recommended_diagnostic_focus: string;
+}
+
+export interface ClassroomDiagnosticOverview {
+  class_id: string;
+  class_name: string;
+  grade: number;
+  students_reviewed: number;
+  students_requiring_review: number;
+  patterns: ClassroomDiagnosticPattern[];
+  summary_guidance: string;
 }
 
 export const api = new ApiService();
+

@@ -130,10 +130,16 @@ export const StudentFingerprint: React.FC<StudentFingerprintProps> = ({ studentI
               Audit Evidence Record
             </ActionButton>
             <ActionButton 
-              variant={fingerprint.teacher_verified ? 'secondary' : 'maroon'}
+              variant="maroon"
+              onClick={() => onNavigate('student_gap_analysis', { studentId })}
+            >
+              Diagnostic Gap Analysis (Phase 2) →
+            </ActionButton>
+            <ActionButton 
+              variant={fingerprint.teacher_verified ? 'secondary' : 'primary'}
               onClick={handleVerifyProfile}
             >
-              {fingerprint.teacher_verified ? '✓ Teacher Verified' : 'Verify Report'}
+              {fingerprint.teacher_verified ? '✓ Verified' : 'Verify'}
             </ActionButton>
           </div>
         }

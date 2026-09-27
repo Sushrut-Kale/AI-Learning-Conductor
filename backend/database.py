@@ -9,10 +9,13 @@ from models import (
     Observation,
     LearningFingerprint,
     ClassroomLearningMap,
-    SkillDistribution
+    SkillDistribution,
+    DiagnosticAnalysis,
+    ClassroomDiagnosticOverview
 )
 from assessment_content import get_foundational_assessments, SKILL_DEFINITIONS
 from evidence_engine import compute_skill_evidence, determine_confidence_level, generate_grounded_narrative, structure_teacher_observation
+from diagnostic_engine import analyze_student_learning_gaps, build_classroom_diagnostic_overview
 
 class DataStore:
     def __init__(self):
@@ -28,6 +31,7 @@ class DataStore:
         self.responses: Dict[str, List[ResponseItem]] = {}  # student_id -> list of ResponseItem
         self.observations: Dict[str, List[Observation]] = {} # student_id -> list of Observation
         self.fingerprints: Dict[str, LearningFingerprint] = {} # student_id -> LearningFingerprint
+        self.diagnostics: Dict[str, DiagnosticAnalysis] = {} # student_id -> DiagnosticAnalysis
         self._seed_demo_data()
 
     def _seed_demo_data(self):
@@ -143,6 +147,11 @@ class DataStore:
         for s_id, student in self.students.items():
             if student.assessment_status == "completed":
                 self.recompute_fingerprint(s_id)
+
+        # Seed initial Phase 2 Diagnostic Analyses
+        self.get_student_diagnostic("ST001", "subtraction")
+        self.get_student_diagnostic("ST002", "paragraph_reading")
+        self.get_student_diagnostic("ST003", "paragraph_reading")
 
     def _generate_student_seed_responses(self, s_id: str, archetype_idx: int, reading_items, numeracy_items):
         name = self.students[s_id].name
@@ -362,4 +371,52 @@ class DataStore:
             summary_insight=summary
         )
 
+    def get_student_diagnostic(self, student_id: str, skill_id: Optional[str] = None) -> Optional[DiagnosticAnalysis]:
+        student = self.students.get(student_id)
+        if not student:
+            return None
+
+        # Check existing cached analysis
+        cache_key = f"{student_id}_{skill_id}" if skill_id else student_id
+        if student_id in self.diagnostics and not skill_id:
+            return self.diagnostics[student_id]
+        if cache_key in self.diagnostics:
+            return self.diagnostics[cache_key]
+
+        responses = self.responses.get(student_id, [])
+        observations = self.observations.get(student_id, [])
+        fp = self.fingerprints.get(student_id)
+
+        analysis = analyze_student_learning_gaps(
+            student_id=student.id,
+            student_name=student.name,
+            responses=responses,
+            observations=observations,
+            fingerprint=fp,
+            target_skill_id=skill_id
+        )
+
+        if analysis:
+            self.diagnostics[student_id] = analysis
+            self.diagnostics[cache_key] = analysis
+
+        return analysis
+
+    def save_diagnostic(self, student_id: str, analysis: DiagnosticAnalysis) -> DiagnosticAnalysis:
+        self.diagnostics[student_id] = analysis
+        cache_key = f"{student_id}_{analysis.skill_id}"
+        self.diagnostics[cache_key] = analysis
+        return analysis
+
+    def get_classroom_diagnostics(self, class_id: str) -> ClassroomDiagnosticOverview:
+        class_obj = self.classes.get(class_id)
+        students = [s for s in self.students.values() if s.class_id == class_id]
+        return build_classroom_diagnostic_overview(
+            class_id=class_id,
+            class_name=class_obj.name if class_obj else "Class",
+            students=students,
+            fingerprints=self.fingerprints
+        )
+
 db = DataStore()
+

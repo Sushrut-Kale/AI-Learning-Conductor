@@ -311,13 +311,17 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
           {learningMap.summary_insight}
         </p>
 
-        <div className="pt-2 text-[11px] font-sans text-[#666666] border-t border-[#D9D3C7] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="pt-2 text-[11px] font-sans text-[#666666] border-t border-[#D9D3C7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <span className="italic">
-            “Now that the platform understands the classroom baseline, Phase 2 will diagnose specific learning gaps and recommend the next instructional move.”
+            “Phase 2 analyzes error patterns across these students, identifies potential prerequisite gaps, and recommends targeted diagnostic checks.”
           </span>
-          <span className="font-semibold text-[#17365D]">
-            Phase 1 Baseline Ready
-          </span>
+          <ActionButton
+            variant="maroon"
+            size="sm"
+            onClick={() => onNavigate('diagnostic_overview', { classId })}
+          >
+            Classroom Diagnostics (Phase 2) →
+          </ActionButton>
         </div>
       </div>
 

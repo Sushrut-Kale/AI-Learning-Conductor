@@ -6,6 +6,8 @@ import { AssessmentInterface } from './components/AssessmentInterface';
 import { StudentFingerprint } from './components/StudentFingerprint';
 import { EvidenceExplorer } from './components/EvidenceExplorer';
 import { ClassroomLearningMap } from './components/ClassroomLearningMap';
+import { DiagnosticOverview } from './components/DiagnosticOverview';
+import { StudentGapAnalysis } from './components/StudentGapAnalysis';
 import { api } from './services/api';
 
 export function App() {
@@ -83,6 +85,21 @@ export function App() {
         {currentScreen === 'learning_map' && (
           <ClassroomLearningMap 
             classId={screenParams.classId || 'CLS_G3A'} 
+            onNavigate={handleNavigate} 
+          />
+        )}
+
+        {(currentScreen === 'diagnostic_overview' || currentScreen === 'diagnostics') && (
+          <DiagnosticOverview 
+            classId={screenParams.classId || 'CLS_G3A'} 
+            onNavigate={handleNavigate} 
+          />
+        )}
+
+        {currentScreen === 'student_gap_analysis' && (
+          <StudentGapAnalysis 
+            studentId={screenParams.studentId || 'ST001'} 
+            skillId={screenParams.skillId}
             onNavigate={handleNavigate} 
           />
         )}

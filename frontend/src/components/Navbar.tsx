@@ -111,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex items-center space-x-1 sm:space-x-2">
+          <nav className="flex items-center space-x-1 sm:space-x-1.5">
             <button
               onClick={() => onNavigate('dashboard')}
               className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
@@ -130,7 +130,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
                   : 'text-[#252525] hover:bg-[#F1EEE7]'
               }`}
             >
-              Class Roster
+              Classes
+            </button>
+            <button
+              onClick={() => onNavigate('assessment', { studentId: 'ST025' })}
+              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
+                activeScreen === 'assessment'
+                  ? 'bg-[#17365D] text-[#FCFBF8]'
+                  : 'text-[#252525] hover:bg-[#F1EEE7]'
+              }`}
+            >
+              Assessments
             </button>
             <button
               onClick={() => onNavigate('learning_map', { classId: 'CLS_G3A' })}
@@ -140,7 +150,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
                   : 'text-[#252525] hover:bg-[#F1EEE7]'
               }`}
             >
-              Classroom Learning Map
+              Learning Map
+            </button>
+            <button
+              onClick={() => onNavigate('diagnostic_overview', { classId: 'CLS_G3A' })}
+              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
+                activeScreen === 'diagnostic_overview' || activeScreen === 'student_gap_analysis' || activeScreen === 'learning_gap_graph'
+                  ? 'bg-[#8A2F35] text-[#FCFBF8]'
+                  : 'text-[#8A2F35] bg-[#FAF4EB] border border-[#E5D8C1] hover:bg-[#F3E7D3]'
+              }`}
+            >
+              <span className="font-semibold">Diagnostics</span>
+              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 2</span>
             </button>
           </nav>
 

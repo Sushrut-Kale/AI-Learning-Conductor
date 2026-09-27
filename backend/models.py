@@ -157,3 +157,103 @@ class TeacherOverrideRequest(BaseModel):
     domain: Literal["reading", "numeracy"]
     new_status: Literal["demonstrated", "emerging", "not_yet_demonstrated", "not_assessed"]
     teacher_note: str
+
+# ============================================================
+# PHASE 2: DIAGNOSTIC & NEXT LEARNING MOVE DATA MODELS
+# ============================================================
+
+class DiagnosticCheckTask(BaseModel):
+    id: str
+    prompt: str
+    expected_response: str
+    instructions_for_teacher: str
+    prerequisite_skill: str
+
+class DiagnosticResponse(BaseModel):
+    task_id: str
+    student_response: str
+    correct: bool
+    teacher_observation: Optional[str] = None
+
+class DiagnosticCheck(BaseModel):
+    id: str
+    hypothesis_id: str
+    prerequisite_skill: str
+    purpose: str
+    tasks: List[DiagnosticCheckTask] = []
+    status: Literal["pending", "completed"] = "pending"
+    responses: List[DiagnosticResponse] = []
+    score_summary: Optional[str] = None
+
+class EvidencePattern(BaseModel):
+    id: str
+    description: str
+    evidence_summary: str
+    supporting_task_ids: List[str] = []
+    successful_task_ids: List[str] = []
+    failed_task_ids: List[str] = []
+    teacher_observations: List[str] = []
+
+class Hypothesis(BaseModel):
+    id: str
+    hypothesis_type: Literal["primary", "alternative"] = "primary"
+    description: str
+    confidence: Literal["High", "Medium", "Low"] = "Medium"
+    confidence_rationale: str = ""
+    status: Literal["open", "supported", "weakened", "unresolved"] = "open"
+    prerequisite_skill: str
+    supporting_evidence: List[str] = []
+    evidence_needed_to_confirm: str = ""
+
+class NextLearningMove(BaseModel):
+    id: str
+    description: str
+    rationale: str
+    prerequisite_focus: str
+    instructional_step: str
+
+class DiagnosticHistoryEntry(BaseModel):
+    timestamp: str
+    event: str
+    previous_status: str
+    updated_status: str
+    evidence_added: str
+    interpretation: str
+
+class DiagnosticAnalysis(BaseModel):
+    id: str
+    student_id: str
+    student_name: str
+    skill_id: str
+    skill_title: str
+    domain: Literal["reading", "numeracy"]
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    status: Literal["open", "supported", "weakened", "unresolved"] = "open"
+    observed_performance: str
+    observed_pattern: EvidencePattern
+    hypotheses: List[Hypothesis] = []
+    next_diagnostic_check: DiagnosticCheck
+    next_learning_move: NextLearningMove
+    diagnostic_history: List[DiagnosticHistoryEntry] = []
+    teacher_override_note: Optional[str] = None
+
+class ClassroomDiagnosticPattern(BaseModel):
+    pattern_id: str
+    skill_id: str
+    skill_title: str
+    domain: Literal["reading", "numeracy"]
+    pattern_summary: str
+    student_count: int
+    students: List[Dict[str, str]] = []
+    potential_shared_prerequisite: str
+    recommended_diagnostic_focus: str
+
+class ClassroomDiagnosticOverview(BaseModel):
+    class_id: str
+    class_name: str
+    grade: int
+    students_reviewed: int
+    students_requiring_review: int
+    patterns: List[ClassroomDiagnosticPattern] = []
+    summary_guidance: str
+
