@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from config import CORS_ORIGINS, GEMINI_API_KEY, DEMO_MODE, ENVIRONMENT
+from config import CORS_ORIGINS, GEMINI_API_KEY, DEMO_MODE, ENVIRONMENT, ENABLE_DOCS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -59,17 +59,18 @@ app = FastAPI(
         "Phases: Assess | Diagnose | Orchestrate | Teach & Adapt | School Intelligence."
     ),
     version="1.0.0",
-    docs_url="/docs" if ENVIRONMENT != "production" else None,
-    redoc_url="/redoc" if ENVIRONMENT != "production" else None,
+    docs_url="/docs" if ENABLE_DOCS else None,
+    redoc_url="/redoc" if ENABLE_DOCS else None,
 )
 
-# CORS — uses CORS_ORIGINS from config (never "*" in production)
+# CORS — uses CORS_ORIGINS from config with safe wildcard handling
+is_wildcard = "*" in CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "X-Request-ID"],
+    allow_credentials=not is_wildcard,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

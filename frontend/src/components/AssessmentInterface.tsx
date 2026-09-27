@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api, Assessment, AssessmentItem } from '../services/api';
+import { api, API_BASE, Assessment, AssessmentItem } from '../services/api';
 import { ActionButton } from './common/InstitutionalUI';
 
 interface AssessmentInterfaceProps {
@@ -204,7 +204,7 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
 
     try {
       for (const r of payloadResponses) {
-        await fetch('/api/responses', {
+        await fetch(`${API_BASE}/responses`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(r)

@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   // API base URL: empty in dev (uses proxy), full URL in production.
-  // In production: set VITE_API_BASE_URL=https://your-backend.com
-  const apiBaseUrl = env.VITE_API_BASE_URL || ''
+  // In production: set VITE_API_URL=https://your-backend.onrender.com
+  const apiBaseUrl = env.VITE_API_URL || env.VITE_API_BASE_URL || ''
 
   const serverConfig = {
     port: 3000,

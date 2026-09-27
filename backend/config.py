@@ -22,6 +22,7 @@ except ImportError:
 
 ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 IS_PRODUCTION: bool = ENVIRONMENT == "production"
+ENABLE_DOCS: bool = os.getenv("ENABLE_DOCS", "true").lower() in ("1", "true", "yes")
 
 # ─────────────────────────────────────────────
 # Demo mode

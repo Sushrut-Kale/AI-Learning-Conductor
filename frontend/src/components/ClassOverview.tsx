@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 import { 
   PageHeader, 
   ActionButton, 
@@ -38,7 +38,7 @@ export const ClassOverview: React.FC<ClassOverviewProps> = ({ classId, onNavigat
     if (!newStudentName.trim()) return;
 
     try {
-      const res = await fetch('/api/students', {
+      const res = await fetch(`${API_BASE}/students`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
