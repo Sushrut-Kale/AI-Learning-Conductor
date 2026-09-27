@@ -365,4 +365,132 @@ class LessonEvidenceBatch(BaseModel):
     evidence: List[LessonEvidenceItem]
     session_notes: Optional[str] = None
 
+# ============================================================
+# PHASE 4 — TEACH, OBSERVE & ADAPT MODELS
+# ============================================================
+
+class InterventionEvidence(BaseModel):
+    id: str
+    task_id: str
+    task_prompt: str
+    student_response: str
+    expected_response: str
+    correct: bool
+    source: Literal["teacher_observation", "post_check", "voice", "multimodal"] = "post_check"
+    timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%H:%M:%S"))
+
+class PostAssessment(BaseModel):
+    id: str
+    correct_count: int
+    total_count: int
+    accuracy_percentage: float
+    items: List[InterventionEvidence] = []
+    completed_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+class AdaptationDecision(BaseModel):
+    id: str
+    response_status: Literal[
+        "SUPPORTED_PROGRESS",
+        "CONTINUED_DIFFICULTY",
+        "PARTIAL_RESPONSE",
+        "INSUFFICIENT_EVIDENCE",
+        "NEW_PATTERN"
+    ]
+    action_type: Literal["CONTINUE", "ADJUST", "INVESTIGATE"]
+    description: str
+    rationale: str
+    baseline_accuracy: float
+    post_accuracy: float
+    accuracy_change_points: float
+    observed_change_summary: str
+    confidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+    teacher_decision: Literal["accepted", "modified", "rejected", "pending"] = "pending"
+    teacher_notes: Optional[str] = None
+
+class TeacherObservationRecord(BaseModel):
+    id: str
+    raw_text: str
+    structured_observation: Dict[str, Any] = {}
+    source: Literal["voice", "quick_note", "copilot"] = "voice"
+    timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%H:%M:%S"))
+
+class MultimodalEvidenceRecord(BaseModel):
+    id: str
+    file_reference: str = ""
+    evidence_type: str = "slate"
+    task_id: str
+    visible_task: str
+    written_answer: str
+    regrouping_representation_visible: bool = True
+    extracted_observation: str
+    confidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+    teacher_verified: bool = True
+    timestamp: str = Field(default_factory=lambda: datetime.now().strftime("%H:%M:%S"))
+
+class StudentTrajectoryEntry(BaseModel):
+    timestamp: str
+    phase: str
+    title: str
+    metric_or_status: str
+    detail: str
+    evidence_trace_id: Optional[str] = None
+
+class StudentLearningTrajectory(BaseModel):
+    student_id: str
+    student_name: str
+    skill_id: str
+    skill_title: str
+    baseline_evidence: str
+    diagnostic_hypothesis: str
+    instructional_path_title: str
+    intervention_evidence: str
+    current_response_status: str
+    next_learning_move: str
+    timeline: List[StudentTrajectoryEntry] = []
+
+class InterventionSession(BaseModel):
+    id: str
+    class_id: str
+    path_id: str
+    path_title: str
+    student_id: str
+    student_name: str
+    skill_id: str
+    skill_title: str
+    started_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    completed_at: Optional[str] = None
+    status: Literal["in_progress", "completed", "review"] = "in_progress"
+    current_step_index: int = 1  # 1: Model, 2: Guided, 3: Independent, 4: Exit
+    baseline_correct: int = 2
+    baseline_total: int = 5
+    baseline_accuracy: float = 40.0
+    post_assessment: Optional[PostAssessment] = None
+    adaptation_decision: Optional[AdaptationDecision] = None
+    observations: List[TeacherObservationRecord] = []
+    multimodal_records: List[MultimodalEvidenceRecord] = []
+
+class ClassroomAdaptationSummary(BaseModel):
+    class_id: str
+    lesson_topic: str
+    total_interventions: int
+    completed_count: int
+    evidence_collected_count: int
+    supported_progress_count: int
+    partial_response_count: int
+    further_check_count: int
+    insufficient_evidence_count: int
+    path_response_breakdowns: List[Dict[str, Any]] = []
+    recommended_next_actions: Dict[str, int] = {}
+
+class TeachAndAdaptOverview(BaseModel):
+    class_id: str
+    class_name: str
+    lesson_topic: str
+    session_date: str
+    status: str
+    paths_status: List[Dict[str, Any]] = []
+    active_interventions: List[InterventionSession] = []
+    adaptation_summary: ClassroomAdaptationSummary
+
+
 

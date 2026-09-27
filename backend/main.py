@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +24,15 @@ from models import (
     OrchestrationBuildRequest,
     PathUpdateRequest,
     LessonEvidenceBatch,
-    LessonEvidenceItem
+    LessonEvidenceItem,
+    InterventionSession,
+    InterventionEvidence,
+    PostAssessment,
+    AdaptationDecision,
+    TeacherObservationRecord,
+    MultimodalEvidenceRecord,
+    StudentLearningTrajectory,
+    TeachAndAdaptOverview
 )
 from database import db
 from ai_service import generate_learning_fingerprint_ai, GEMINI_API_KEY
@@ -659,5 +668,136 @@ async def update_diagnostics_from_orchestration(plan_id: str):
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+# ============================================================
+# PHASE 4 — TEACH, OBSERVE & ADAPT APIS (Section 28)
+# ============================================================
+
+@app.get("/api/teach/class/{class_id}", response_model=TeachAndAdaptOverview)
+async def get_teach_and_adapt_overview(class_id: str):
+    """
+    Teach & Adapt Dashboard (Section 4 & 33):
+    Overview of active interventions, evidence metrics, and classroom response telemetry.
+    """
+    return db.get_teach_and_adapt_overview(class_id)
+
+@app.get("/api/interventions/{session_id}", response_model=InterventionSession)
+async def get_intervention_session(session_id: str):
+    """
+    Retrieves an individual intervention session by session ID.
+    """
+    session = db.get_intervention_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Intervention session not found")
+    return session
+
+@app.get("/api/interventions/student/{student_id}", response_model=InterventionSession)
+async def get_student_intervention(student_id: str):
+    """
+    Retrieves or initializes the active intervention session for a student.
+    """
+    return db.get_student_intervention(student_id)
+
+@app.post("/api/interventions/{session_id}/start")
+async def start_intervention_session(session_id: str):
+    """
+    Begins live teaching on an instructional path.
+    """
+    session = db.get_intervention_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Intervention session not found")
+    session.status = "in_progress"
+    session.current_step_index = 1
+    db.save_intervention_session(session)
+    return {"status": "started", "session": session}
+
+@app.post("/api/interventions/{session_id}/step")
+async def advance_intervention_step(session_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Advances step in teaching sequence (1. Model -> 2. Guided -> 3. Independent -> 4. Exit).
+    """
+    session = db.get_intervention_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Intervention session not found")
+    step = payload.get("step_index", session.current_step_index + 1)
+    session.current_step_index = min(4, max(1, step))
+    db.save_intervention_session(session)
+    return {"status": "step_updated", "current_step_index": session.current_step_index, "session": session}
+
+@app.post("/api/interventions/{session_id}/observation", response_model=InterventionSession)
+async def record_intervention_observation(session_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Voice / Quick Teacher Observation (Section 9 & 31):
+    Structures raw teacher statements into clean qualitative evidence.
+    """
+    raw_text = payload.get("raw_text", "")
+    source = payload.get("source", "voice")
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="raw_text required")
+    return db.record_teacher_observation_for_session(session_id, raw_text, source)
+
+@app.post("/api/interventions/{session_id}/multimodal", response_model=InterventionSession)
+async def record_intervention_multimodal(session_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Multimodal Student Work Sample (Section 10, 11, 29, 32):
+    Processes student slate/notebook photo and extracts visible task, answer, and regrouping representation.
+    """
+    file_ref = payload.get("file_reference", "WORK_AARAV_SLATE_01.png")
+    evidence_type = payload.get("evidence_type", "slate")
+    return db.record_multimodal_for_session(session_id, file_ref, evidence_type)
+
+@app.post("/api/interventions/{session_id}/post-check", response_model=InterventionSession)
+async def record_intervention_post_check(session_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Post-Check Evidence & Deterministic Adaptation Evaluation (Section 2, 12, 14, 23):
+    Evaluates post-activity items, computes before/after accuracy change, and determines response status.
+    """
+    items_data = payload.get("items", [])
+    if not items_data:
+        raise HTTPException(status_code=400, detail="Post-check items required")
+    items = [InterventionEvidence(**item) for item in items_data]
+    return db.record_post_check_for_session(session_id, items)
+
+@app.post("/api/interventions/{session_id}/decision")
+async def record_adaptation_decision(session_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    Teacher Control (Section 18):
+    Teacher accepts, modifies, or rejects AI adaptation proposal.
+    """
+    session = db.get_intervention_session(session_id)
+    if not session or not session.adaptation_decision:
+        raise HTTPException(status_code=404, detail="Session or adaptation decision not found")
+    decision = payload.get("teacher_decision", "accepted")
+    notes = payload.get("teacher_notes")
+    session.adaptation_decision.teacher_decision = decision
+    if notes:
+        session.adaptation_decision.teacher_notes = notes
+    db.save_intervention_session(session)
+    return {"status": "decision_recorded", "adaptation_decision": session.adaptation_decision}
+
+@app.get("/api/students/{student_id}/trajectory", response_model=StudentLearningTrajectory)
+async def get_student_learning_trajectory(student_id: str):
+    """
+    Longitudinal Student Learning Trajectory (Section 21 & 22):
+    Chronological trace across Phase 1 Baseline -> Phase 2 Gap -> Phase 3 Path -> Phase 4 Intervention.
+    """
+    return db.get_student_trajectory(student_id)
+
+@app.post("/api/interventions/{session_id}/update-diagnostics")
+async def sync_intervention_to_diagnostics(session_id: str):
+    """
+    Phase 4 -> Phase 2 Closed Loop (Section 36 & 41):
+    Feeds post-intervention evidence and verified strategy status back into Phase 2.
+    """
+    return db.update_diagnostics_from_intervention(session_id)
+
+@app.post("/api/teach/class/{class_id}/next-lesson")
+async def prepare_next_lesson(class_id: str):
+    """
+    Phase 4 -> Phase 3 Next Lesson Handoff (Section 35 & 41):
+    Synthesizes updated intervention outcomes into a fresh classroom orchestration for the next lesson.
+    """
+    return db.prepare_next_lesson_handoff(class_id)
+
 
 

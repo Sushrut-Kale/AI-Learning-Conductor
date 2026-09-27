@@ -64,6 +64,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigate }
             >
               Classroom Learning Map
             </ActionButton>
+            <ActionButton 
+              variant="secondary" 
+              onClick={() => onNavigate('teach_and_adapt', { classId: primaryClass.id })}
+            >
+              Teach & Adapt (Phase 4)
+            </ActionButton>
           </div>
         }
       />

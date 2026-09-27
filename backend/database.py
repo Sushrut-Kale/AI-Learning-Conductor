@@ -1,4 +1,6 @@
 from typing import Dict, List, Optional, Any
+from datetime import datetime
+import uuid
 import random
 from models import (
     Teacher,
@@ -15,12 +17,23 @@ from models import (
     ClassroomPlan,
     ClassroomOrchestrationOverview,
     OrchestrationBuildRequest,
-    LessonEvidenceItem
+    LessonEvidenceItem,
+    InterventionSession,
+    InterventionEvidence,
+    PostAssessment,
+    AdaptationDecision,
+    TeacherObservationRecord,
+    MultimodalEvidenceRecord,
+    StudentTrajectoryEntry,
+    StudentLearningTrajectory,
+    ClassroomAdaptationSummary,
+    TeachAndAdaptOverview
 )
 from assessment_content import get_foundational_assessments, SKILL_DEFINITIONS
 from evidence_engine import compute_skill_evidence, determine_confidence_level, generate_grounded_narrative, structure_teacher_observation
 from diagnostic_engine import analyze_student_learning_gaps, build_classroom_diagnostic_overview
 from orchestration_engine import orchestration_engine
+from adaptation_engine import adaptation_engine
 
 class DataStore:
     def __init__(self):
@@ -38,6 +51,7 @@ class DataStore:
         self.fingerprints: Dict[str, LearningFingerprint] = {} # student_id -> LearningFingerprint
         self.diagnostics: Dict[str, DiagnosticAnalysis] = {} # student_id -> DiagnosticAnalysis
         self.classroom_plans: Dict[str, ClassroomPlan] = {} # plan_id -> ClassroomPlan, and class_id -> latest plan
+        self.interventions: Dict[str, InterventionSession] = {} # session_id -> InterventionSession, and student_id -> session
         self._seed_demo_data()
 
     def _seed_demo_data(self):
@@ -161,6 +175,9 @@ class DataStore:
 
         # Seed initial Phase 3 Classroom Plan
         self.build_classroom_plan(c_id)
+
+        # Seed initial Phase 4 Interventions
+        self._seed_phase4_interventions(c_id)
 
     def _generate_student_seed_responses(self, s_id: str, archetype_idx: int, reading_items, numeracy_items):
         name = self.students[s_id].name
@@ -491,6 +508,341 @@ class DataStore:
         result = orchestration_engine.update_diagnostics_from_lesson_evidence(plan, self.diagnostics)
         return result
 
+    # ============================================================
+    # PHASE 4 — INTERVENTION & ADAPTATION METHODS
+    # ============================================================
+
+    def _seed_phase4_interventions(self, class_id: str):
+        # 1. Aarav Sharma (ST001) in Path A (2-Digit Subtraction with Regrouping)
+        aarav_post_items = [
+            InterventionEvidence(
+                id="EV_POST_AARAV_01",
+                task_id="TASK_POST_SUB_01",
+                task_prompt="Solve 43 - 17 using place-value exchange.",
+                student_response="26",
+                expected_response="26",
+                correct=True,
+                source="post_check",
+                timestamp="10:30:15"
+            ),
+            InterventionEvidence(
+                id="EV_POST_AARAV_02",
+                task_id="TASK_POST_SUB_02",
+                task_prompt="Solve 52 - 28 on slate.",
+                student_response="24",
+                expected_response="24",
+                correct=True,
+                source="post_check",
+                timestamp="10:31:02"
+            ),
+            InterventionEvidence(
+                id="EV_POST_AARAV_03",
+                task_id="TASK_POST_SUB_03",
+                task_prompt="Solve 61 - 35.",
+                student_response="26",
+                expected_response="26",
+                correct=True,
+                source="post_check",
+                timestamp="10:31:45"
+            ),
+            InterventionEvidence(
+                id="EV_POST_AARAV_04",
+                task_id="TASK_POST_SUB_04",
+                task_prompt="Solve 74 - 49.",
+                student_response="25",
+                expected_response="25",
+                correct=True,
+                source="post_check",
+                timestamp="10:32:20"
+            ),
+            InterventionEvidence(
+                id="EV_POST_AARAV_05",
+                task_id="TASK_POST_SUB_05",
+                task_prompt="Solve 83 - 57.",
+                student_response="24 (subtracted 7 - 3)",
+                expected_response="26",
+                correct=False,
+                source="post_check",
+                timestamp="10:33:10"
+            )
+        ]
+
+        aarav_post = PostAssessment(
+            id="POST_ST001_SUB",
+            correct_count=4,
+            total_count=5,
+            accuracy_percentage=80.0,
+            items=aarav_post_items,
+            completed_at=datetime.now().isoformat()
+        )
+
+        aarav_obs = [
+            adaptation_engine.structure_teacher_observation(
+                "Needed prompting on first two attempts, then independently exchanged one ten on slate.",
+                source="voice"
+            )
+        ]
+
+        aarav_mm = [
+            adaptation_engine.extract_multimodal_evidence(
+                file_reference="WORK_AARAV_SLATE_01.png",
+                evidence_type="slate",
+                task_id="TASK_POST_SUB_01"
+            )
+        ]
+
+        aarav_decision = adaptation_engine.evaluate_intervention_response(
+            baseline_correct=2,
+            baseline_total=5,
+            post_items=aarav_post_items,
+            observations=aarav_obs
+        )
+
+        aarav_session = InterventionSession(
+            id="INT_ST001_SUB",
+            class_id=class_id,
+            path_id="PATH_A",
+            path_title="Path A — Regrouping Foundation",
+            student_id="ST001",
+            student_name="Aarav Sharma",
+            skill_id="subtraction",
+            skill_title="2-Digit Subtraction with Regrouping",
+            status="completed",
+            current_step_index=4,
+            baseline_correct=2,
+            baseline_total=5,
+            baseline_accuracy=40.0,
+            post_assessment=aarav_post,
+            adaptation_decision=aarav_decision,
+            observations=aarav_obs,
+            multimodal_records=aarav_mm
+        )
+        self.interventions[aarav_session.id] = aarav_session
+        self.interventions["INT_AARAV_001"] = aarav_session
+        self.interventions["ST001"] = aarav_session
+
+        # 2. Ananya Deshmukh (ST002) in Path B (Word Decoding)
+        ananya_post_items = [
+            InterventionEvidence(
+                id="EV_POST_ANANYA_01",
+                task_id="TASK_POST_READ_01",
+                task_prompt="Read isolated word: 'मैदानात'",
+                student_response="मैदानात",
+                expected_response="मैदानात",
+                correct=True,
+                source="post_check"
+            ),
+            InterventionEvidence(
+                id="EV_POST_ANANYA_02",
+                task_id="TASK_POST_READ_02",
+                task_prompt="Read isolated word: 'चमत्कार'",
+                student_response="चमत्कार",
+                expected_response="चमत्कार",
+                correct=True,
+                source="post_check"
+            ),
+            InterventionEvidence(
+                id="EV_POST_ANANYA_03",
+                task_id="TASK_POST_READ_03",
+                task_prompt="Read isolated word: 'ससोबा'",
+                student_response="ससोबा",
+                expected_response="ससोबा",
+                correct=True,
+                source="post_check"
+            )
+        ]
+        ananya_post = PostAssessment(
+            id="POST_ST002_READ",
+            correct_count=3,
+            total_count=3,
+            accuracy_percentage=100.0,
+            items=ananya_post_items,
+            completed_at=datetime.now().isoformat()
+        )
+        ananya_decision = adaptation_engine.evaluate_intervention_response(
+            baseline_correct=1,
+            baseline_total=3,
+            post_items=ananya_post_items,
+            observations=[adaptation_engine.structure_teacher_observation("Decoded 3-syllable isolated words accurately with finger tapping.")]
+        )
+        ananya_session = InterventionSession(
+            id="INT_ST002_READ",
+            class_id=class_id,
+            path_id="PATH_B",
+            path_title="Path B — Word Decoding",
+            student_id="ST002",
+            student_name="Ananya Deshmukh",
+            skill_id="paragraph_reading",
+            skill_title="Paragraph Reading (Word Decoding)",
+            status="completed",
+            current_step_index=4,
+            baseline_correct=1,
+            baseline_total=3,
+            baseline_accuracy=33.3,
+            post_assessment=ananya_post,
+            adaptation_decision=ananya_decision,
+            observations=[adaptation_engine.structure_teacher_observation("Decoded 3-syllable isolated words accurately.")]
+        )
+        self.interventions[ananya_session.id] = ananya_session
+        self.interventions["ST002"] = ananya_session
+
+    def get_teach_and_adapt_overview(self, class_id: str) -> TeachAndAdaptOverview:
+        class_obj = self.classes.get(class_id)
+        # Deduplicate sessions by ID
+        unique_sessions = {}
+        for s in self.interventions.values():
+            if s.class_id == class_id:
+                unique_sessions[s.id] = s
+        sessions = list(unique_sessions.values())
+
+        summary = adaptation_engine.generate_classroom_adaptation_summary(
+            class_id=class_id,
+            lesson_topic="Two-Digit Subtraction with Regrouping",
+            sessions=sessions
+        )
+
+        paths_status = [
+            {"path_id": "PATH_A", "title": "Path A — Regrouping Foundation", "student_count": 6, "status": "In Progress"},
+            {"path_id": "PATH_B", "title": "Path B — Word Decoding", "student_count": 4, "status": "Completed"},
+            {"path_id": "PATH_C", "title": "Path C — Number Comparison", "student_count": 3, "status": "In Progress"},
+            {"path_id": "PATH_D", "title": "Path D — Independent Consolidation", "student_count": 17, "status": "Completed"}
+        ]
+
+        return TeachAndAdaptOverview(
+            class_id=class_id,
+            class_name=class_obj.name if class_obj else "Grade 3 — Section A",
+            lesson_topic="Two-Digit Subtraction with Regrouping",
+            session_date="24 September 2026",
+            status="ACTIVE",
+            paths_status=paths_status,
+            active_interventions=sessions,
+            adaptation_summary=summary
+        )
+
+    def get_intervention_session(self, session_id: str) -> Optional[InterventionSession]:
+        if session_id in self.interventions:
+            return self.interventions[session_id]
+        for s in self.interventions.values():
+            if s.id == session_id or s.student_id == session_id:
+                return s
+        if session_id in ["INT_AARAV_001", "ST001"]:
+            return self.interventions.get("INT_ST001_SUB")
+        return None
+
+    def get_student_intervention(self, student_id: str) -> InterventionSession:
+        if student_id in self.interventions:
+            return self.interventions[student_id]
+        
+        # Build dynamic session if not exists
+        student = self.students.get(student_id)
+        name = student.name if student else "Student"
+        session = InterventionSession(
+            id=f"INT_{student_id}_SUB",
+            class_id="CLS_G3A",
+            path_id="PATH_A",
+            path_title="Path A — Regrouping Foundation",
+            student_id=student_id,
+            student_name=name,
+            skill_id="subtraction",
+            skill_title="2-Digit Subtraction with Regrouping",
+            status="in_progress",
+            current_step_index=2,
+            baseline_correct=2,
+            baseline_total=5,
+            baseline_accuracy=40.0
+        )
+        self.interventions[session.id] = session
+        self.interventions[student_id] = session
+        return session
+
+    def save_intervention_session(self, session: InterventionSession) -> InterventionSession:
+        self.interventions[session.id] = session
+        self.interventions[session.student_id] = session
+        return session
+
+    def record_teacher_observation_for_session(self, session_id: str, raw_text: str, source: str = "voice") -> InterventionSession:
+        session = self.get_intervention_session(session_id)
+        if not session:
+            raise ValueError("Session not found")
+        obs_rec = adaptation_engine.structure_teacher_observation(raw_text, source)
+        session.observations.append(obs_rec)
+        self.save_intervention_session(session)
+        return session
+
+    def record_multimodal_for_session(self, session_id: str, file_ref: str, evidence_type: str) -> InterventionSession:
+        session = self.get_intervention_session(session_id)
+        if not session:
+            raise ValueError("Session not found")
+        mm_rec = adaptation_engine.extract_multimodal_evidence(file_ref, evidence_type)
+        session.multimodal_records.append(mm_rec)
+        self.save_intervention_session(session)
+        return session
+
+    def record_post_check_for_session(self, session_id: str, items: List[InterventionEvidence]) -> InterventionSession:
+        session = self.get_intervention_session(session_id)
+        if not session:
+            raise ValueError("Session not found")
+        
+        correct_cnt = sum(1 for item in items if item.correct)
+        tot_cnt = len(items)
+        acc_pct = round((correct_cnt / max(1, tot_cnt)) * 100, 1)
+
+        post = PostAssessment(
+            id=f"POST_{session.student_id}_{uuid.uuid4().hex[:6]}",
+            correct_count=correct_cnt,
+            total_count=tot_cnt,
+            accuracy_percentage=acc_pct,
+            items=items,
+            completed_at=datetime.now().isoformat()
+        )
+        session.post_assessment = post
+        session.status = "completed"
+        session.current_step_index = 4
+
+        # Run evaluation
+        decision = adaptation_engine.evaluate_intervention_response(
+            baseline_correct=session.baseline_correct,
+            baseline_total=session.baseline_total,
+            post_items=items,
+            observations=session.observations
+        )
+        session.adaptation_decision = decision
+        self.save_intervention_session(session)
+        return session
+
+    def get_student_trajectory(self, student_id: str) -> StudentLearningTrajectory:
+        session = self.get_student_intervention(student_id)
+        student = self.students.get(student_id)
+        name = student.name if student else session.student_name
+        return adaptation_engine.compile_student_trajectory(student_id, name, session)
+
+    def update_diagnostics_from_intervention(self, session_id: str) -> Dict[str, Any]:
+        session = self.get_intervention_session(session_id)
+        if not session:
+            raise ValueError("Session not found")
+        result = adaptation_engine.sync_adaptation_to_phase2_diagnostics(session, self.diagnostics)
+        return result
+
+    def prepare_next_lesson_handoff(self, class_id: str) -> Dict[str, Any]:
+        """
+        Closed Loop Bridge into Phase 3 (Section 35):
+        Constructs the updated classroom orchestration using latest intervention evidence.
+        """
+        request = OrchestrationBuildRequest(
+            lesson_topic="Multi-Step Two-Digit Subtraction and Application",
+            duration_minutes=40
+        )
+        new_plan = self.build_classroom_plan(class_id, request)
+        return {
+            "status": "next_lesson_orchestrated",
+            "class_id": class_id,
+            "new_plan_id": new_plan.id,
+            "lesson_topic": new_plan.lesson_topic,
+            "duration_minutes": new_plan.duration_minutes,
+            "message": "Next classroom orchestration successfully generated incorporating Phase 4 intervention responses."
+        }
+
 db = DataStore()
+
 
 

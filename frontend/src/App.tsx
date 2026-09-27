@@ -11,6 +11,9 @@ import { StudentGapAnalysis } from './components/StudentGapAnalysis';
 import { ClassroomOrchestration } from './components/ClassroomOrchestration';
 import { LiveClassroom } from './components/LiveClassroom';
 import { LessonReviewModal } from './components/LessonReviewModal';
+import { TeachAndAdaptDashboard } from './components/TeachAndAdaptDashboard';
+import { LiveTeachingView } from './components/LiveTeachingView';
+import { InterventionReviewView } from './components/InterventionReviewView';
 import { api, ClassroomPlan } from './services/api';
 
 function LiveClassroomScreen({
@@ -173,6 +176,29 @@ export function App() {
         {currentScreen === 'live_classroom' && (
           <LiveClassroomScreen
             planId={screenParams.planId || 'CLS_G3A'}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {(currentScreen === 'teach_and_adapt' || currentScreen === 'teach_adapt') && (
+          <TeachAndAdaptDashboard 
+            classId={screenParams.classId || 'CLS_G3A'}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {currentScreen === 'live_teaching' && (
+          <LiveTeachingView
+            sessionId={screenParams.sessionId || 'INT_ST001_SUB'}
+            studentId={screenParams.studentId || 'ST001'}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {currentScreen === 'intervention_review' && (
+          <InterventionReviewView
+            sessionId={screenParams.sessionId || 'INT_ST001_SUB'}
+            studentId={screenParams.studentId || 'ST001'}
             onNavigate={handleNavigate}
           />
         )}

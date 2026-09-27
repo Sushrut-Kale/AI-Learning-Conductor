@@ -541,6 +541,156 @@ class ApiService {
     });
     return await res.json();
   }
+
+  // Phase 4: Teach, Observe & Adapt
+  async getTeachAndAdaptOverview(classId: string): Promise<TeachAndAdaptOverview> {
+    try {
+      const res = await fetch(`${API_BASE}/teach/class/${classId}`);
+      if (!res.ok) throw new Error('Overview fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`TEACH_OVERVIEW_${classId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`TEACH_OVERVIEW_${classId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async getInterventionSession(sessionId: string): Promise<InterventionSession> {
+    try {
+      const res = await fetch(`${API_BASE}/interventions/${sessionId}`);
+      if (!res.ok) throw new Error('Session fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`INTERVENTION_${sessionId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async getStudentIntervention(studentId: string): Promise<InterventionSession> {
+    try {
+      const res = await fetch(`${API_BASE}/interventions/student/${studentId}`);
+      if (!res.ok) throw new Error('Student intervention fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`INTERVENTION_STUDENT_${studentId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`INTERVENTION_STUDENT_${studentId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async startInterventionSession(sessionId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/start`, { method: 'POST' });
+    return await res.json();
+  }
+
+  async advanceInterventionStep(sessionId: string, stepIndex?: number): Promise<any> {
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/step`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ step_index: stepIndex })
+    });
+    return await res.json();
+  }
+
+  async recordInterventionObservation(sessionId: string, rawText: string, source: string = 'voice'): Promise<InterventionSession> {
+    if (this.isOffline()) {
+      await localDb.syncQueue.add({
+        type: 'observation',
+        payload: { sessionId, rawText, source },
+        created_at: new Date().toISOString()
+      });
+      const cached = localStorage.getItem(`INTERVENTION_${sessionId}`);
+      if (cached) {
+        const sess = JSON.parse(cached);
+        sess.observations.push({
+          id: `OBS_LOCAL_${Date.now()}`,
+          raw_text: rawText,
+          structured_observation: { note: rawText, status_signal: 'Offline saved' },
+          source
+        });
+        localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(sess));
+        return sess;
+      }
+    }
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/observation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw_text: rawText, source })
+    });
+    const updated = await res.json();
+    localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async recordInterventionMultimodal(sessionId: string, fileRef: string, evidenceType: string = 'slate'): Promise<InterventionSession> {
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/multimodal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_reference: fileRef, evidence_type: evidenceType })
+    });
+    const updated = await res.json();
+    localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async recordInterventionPostCheck(sessionId: string, items: InterventionEvidence[]): Promise<InterventionSession> {
+    if (this.isOffline()) {
+      await localDb.syncQueue.add({
+        type: 'response',
+        payload: { sessionId, items },
+        created_at: new Date().toISOString()
+      });
+    }
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/post-check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+    const updated = await res.json();
+    localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async recordAdaptationDecision(sessionId: string, decision: 'accepted' | 'modified' | 'rejected', notes?: string): Promise<InterventionSession> {
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, notes })
+    });
+    const updated = await res.json();
+    localStorage.setItem(`INTERVENTION_${sessionId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async getStudentLearningTrajectory(studentId: string): Promise<StudentLearningTrajectory> {
+    const res = await fetch(`${API_BASE}/students/${studentId}/trajectory`);
+    return await res.json();
+  }
+
+  async updateDiagnosticsFromIntervention(sessionId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/interventions/${sessionId}/update-diagnostics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    return await res.json();
+  }
+
+  async prepareNextLessonHandoff(classId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/teach/class/${classId}/next-lesson`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    return await res.json();
+  }
 }
 
 // Phase 2 Type Definitions
@@ -789,6 +939,163 @@ export interface LessonReviewData {
     recommended_action: string;
   }[];
   plan_status: string;
+}
+
+// Phase 4: Teach, Observe & Adapt Type Definitions
+export interface InterventionEvidence {
+  id: string;
+  task_id: string;
+  task_prompt: string;
+  student_response: string;
+  expected_response: string;
+  correct: boolean;
+  target_strategy_used?: boolean;
+  source: 'post_check' | 'live_step' | 'multimodal';
+  timestamp?: string;
+}
+
+export interface PostAssessment {
+  id: string;
+  correct_count: number;
+  total_count: number;
+  accuracy_percentage: number;
+  items: InterventionEvidence[];
+  completed_at: string;
+}
+
+export interface AdaptationDecision {
+  id: string;
+  response_status: 'SUPPORTED_PROGRESS' | 'CONTINUED_DIFFICULTY' | 'PARTIAL_RESPONSE' | 'INSUFFICIENT_EVIDENCE' | 'NEW_PATTERN';
+  action_type: 'CONTINUE' | 'ADJUST' | 'INVESTIGATE';
+  description: string;
+  rationale: string;
+  baseline_accuracy: number;
+  post_accuracy: number;
+  accuracy_change_points: number;
+  observed_change_summary: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  teacher_decision: 'accepted' | 'modified' | 'rejected' | 'pending';
+  teacher_notes?: string;
+}
+
+export interface TeacherObservationRecord {
+  id: string;
+  raw_text: string;
+  structured_observation: {
+    initial_assistance?: string;
+    terminal_competence?: string;
+    focal_strategy?: string;
+    status_signal?: string;
+    note?: string;
+    [key: string]: any;
+  };
+  source: 'voice' | 'quick_note' | 'copilot';
+  timestamp?: string;
+}
+
+export interface MultimodalEvidenceRecord {
+  id: string;
+  file_reference: string;
+  evidence_type: string;
+  task_id: string;
+  visible_task: string;
+  written_answer: string;
+  regrouping_representation_visible: boolean;
+  visible_steps?: string;
+  extracted_observation: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  teacher_verified: boolean;
+  timestamp?: string;
+}
+
+export interface StudentTrajectoryEntry {
+  timestamp: string;
+  phase: string;
+  title: string;
+  metric_or_status: string;
+  detail: string;
+  evidence_trace_id?: string;
+}
+
+export interface StudentLearningTrajectory {
+  student_id: string;
+  student_name: string;
+  skill_id: string;
+  skill_title: string;
+  baseline_evidence: string;
+  diagnostic_hypothesis: string;
+  instructional_path_title: string;
+  intervention_evidence: string;
+  current_response_status: string;
+  next_learning_move: string;
+  timeline: StudentTrajectoryEntry[];
+}
+
+export interface InterventionSession {
+  id: string;
+  class_id: string;
+  path_id: string;
+  path_title: string;
+  student_id: string;
+  student_name: string;
+  skill_id: string;
+  skill_title: string;
+  started_at: string;
+  completed_at?: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'abandoned';
+  current_step_index: number;
+  baseline_correct: number;
+  baseline_total: number;
+  baseline_accuracy: number;
+  post_assessment?: PostAssessment;
+  adaptation_decision?: AdaptationDecision;
+  observations: TeacherObservationRecord[];
+  multimodal_records: MultimodalEvidenceRecord[];
+}
+
+export interface PathResponseBreakdown {
+  path_id: string;
+  title: string;
+  total_students: number;
+  progress_observed: number;
+  partial_response: number;
+  further_check: number;
+  recommended_action: 'CONTINUE' | 'ADJUST' | 'INVESTIGATE';
+  summary: string;
+}
+
+export interface ClassroomAdaptationSummary {
+  class_id: string;
+  lesson_topic: string;
+  total_interventions: number;
+  completed_count: number;
+  evidence_collected_count: number;
+  supported_progress_count: number;
+  partial_response_count: number;
+  further_check_count: number;
+  insufficient_evidence_count: number;
+  path_response_breakdowns: PathResponseBreakdown[];
+  recommended_next_actions: {
+    continue: number;
+    adjust: number;
+    investigate: number;
+  };
+}
+
+export interface TeachAndAdaptOverview {
+  class_id: string;
+  class_name: string;
+  lesson_topic: string;
+  session_date: string;
+  status: string;
+  paths_status: {
+    path_id: string;
+    title: string;
+    student_count: number;
+    status: string;
+  }[];
+  active_interventions: InterventionSession[];
+  adaptation_summary: ClassroomAdaptationSummary;
 }
 
 export const api = new ApiService();
