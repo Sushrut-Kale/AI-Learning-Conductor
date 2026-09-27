@@ -167,16 +167,25 @@ export const DiagnosticOverview: React.FC<DiagnosticOverviewProps> = ({ classId,
         </div>
       </div>
 
-      {/* Phase 3 Boundary Explanation (Section 20) */}
-      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-5 text-xs text-[#525252] space-y-2">
-        <p className="font-bold text-[#17365D] uppercase tracking-wide text-[10px]">
-          Classroom Orchestration Boundary (Phase 2 vs Phase 3)
-        </p>
-        <p className="leading-relaxed">
-          While Phase 2 identifies clusters of learners with similar prerequisite error patterns, 
-          <b> the platform intentionally does not automatically generate teaching groups or differentiated worksheets at this stage</b>. 
-          Dynamic grouping, time allocation, and classroom orchestration belong strictly to <b>Phase 3: Orchestrate Classroom</b>.
-        </p>
+      {/* Phase 3 Orchestration Handoff Banner (Section 20 & 43) */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-5 text-xs text-[#525252] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1 max-w-2xl">
+          <p className="font-bold text-[#17365D] uppercase tracking-wide text-[10px]">
+            Classroom Orchestration Handoff (Phase 2 → Phase 3)
+          </p>
+          <p className="leading-relaxed">
+            Phase 2 has identified evidence-grounded learning patterns and Next Learning Moves. 
+            Proceed to <b>Phase 3: Orchestrate Classroom</b> to construct feasible teacher attention schedules, allocate limited direct instructional time, and launch Live Classroom Mode.
+          </p>
+        </div>
+
+        <ActionButton
+          variant="maroon"
+          size="sm"
+          onClick={() => onNavigate('orchestration', { classId })}
+        >
+          Orchestrate Classroom (Phase 3) →
+        </ActionButton>
       </div>
 
     </div>

@@ -427,6 +427,120 @@ class ApiService {
     const res = await fetch(`${API_BASE}/classes/${classId}/diagnostic-overview`);
     return await res.json();
   }
+
+  // ============================================================
+  // PHASE 3 — CLASSROOM ORCHESTRATION METHODS
+  // ============================================================
+
+  async getClassroomOrchestration(classId: string): Promise<ClassroomOrchestrationOverview> {
+    try {
+      const res = await fetch(`${API_BASE}/classes/${classId}/orchestration`);
+      if (!res.ok) throw new Error('Orchestration overview fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`ORCH_OVERVIEW_${classId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`ORCH_OVERVIEW_${classId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async buildClassroomOrchestration(classId: string, req: OrchestrationBuildRequest): Promise<ClassroomPlan> {
+    const res = await fetch(`${API_BASE}/classes/${classId}/orchestration/build`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    });
+    const plan = await res.json();
+    localStorage.setItem(`PLAN_${plan.id}`, JSON.stringify(plan));
+    localStorage.setItem(`LATEST_PLAN_${classId}`, JSON.stringify(plan));
+    return plan;
+  }
+
+  async getOrchestrationPlan(planId: string): Promise<ClassroomPlan> {
+    try {
+      const res = await fetch(`${API_BASE}/orchestration/${planId}`);
+      if (!res.ok) throw new Error('Plan fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`PLAN_${planId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`PLAN_${planId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async updateOrchestrationPlan(planId: string, updates: any): Promise<ClassroomPlan> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    const updated = await res.json();
+    localStorage.setItem(`PLAN_${planId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async approveOrchestrationPlan(planId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/approve`, {
+      method: 'POST'
+    });
+    return await res.json();
+  }
+
+  async startLiveClassroom(planId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/start`, {
+      method: 'POST'
+    });
+    return await res.json();
+  }
+
+  async recordLessonEvidence(planId: string, evidence: LessonEvidenceItem[], notes?: string): Promise<ClassroomPlan> {
+    if (this.isOffline()) {
+      await localDb.syncQueue.add({
+        type: 'response',
+        payload: { planId, evidence, notes },
+        created_at: new Date().toISOString()
+      });
+      const cached = localStorage.getItem(`PLAN_${planId}`);
+      if (cached) {
+        const plan = JSON.parse(cached);
+        plan.evidence_records.push(...evidence);
+        localStorage.setItem(`PLAN_${planId}`, JSON.stringify(plan));
+        return plan;
+      }
+    }
+
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/evidence`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan_id: planId, evidence, session_notes: notes })
+    });
+    const updated = await res.json();
+    localStorage.setItem(`PLAN_${planId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  async completeLessonSession(planId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/complete`, {
+      method: 'POST'
+    });
+    return await res.json();
+  }
+
+  async getLessonReview(planId: string): Promise<LessonReviewData> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/review`);
+    return await res.json();
+  }
+
+  async updateDiagnosticsFromOrchestration(planId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/orchestration/${planId}/update-diagnostics`, {
+      method: 'POST'
+    });
+    return await res.json();
+  }
 }
 
 // Phase 2 Type Definitions
@@ -533,6 +647,148 @@ export interface ClassroomDiagnosticOverview {
   students_requiring_review: number;
   patterns: ClassroomDiagnosticPattern[];
   summary_guidance: string;
+}
+
+// ============================================================
+// PHASE 3 — CLASSROOM ORCHESTRATION TYPE DEFINITIONS
+// ============================================================
+
+export interface ClassroomActivity {
+  start_activity: string;
+  guided_activity: string;
+  independent_activity: string;
+  exit_activity: string;
+  materials_needed: string[];
+}
+
+export interface PathMembership {
+  student_id: string;
+  student_name: string;
+  current_focus: string;
+  hypothesis_status: string;
+  next_learning_move: string;
+  evidence_basis: string;
+  locked?: boolean;
+}
+
+export interface InstructionalPath {
+  id: string;
+  title: string;
+  learning_focus: string;
+  domain: 'numeracy' | 'reading' | 'general';
+  teacher_attention: 'required' | 'recommended' | 'quick_check' | 'independent';
+  duration_minutes: number;
+  student_ids: string[];
+  students: PathMembership[];
+  rationale: string;
+  next_learning_move: string;
+  activity: ClassroomActivity;
+  exit_task_ids: string[];
+}
+
+export interface LessonSegment {
+  id: string;
+  start_minute: number;
+  end_minute: number;
+  title: string;
+  segment_type: 'whole_class' | 'teacher_focus' | 'quick_check' | 'peer_supported' | 'independent' | 'exit_evidence';
+  active_path_id?: string;
+  teacher_role: string;
+  class_activity: string;
+  students_involved_count: number;
+}
+
+export interface LessonEvidenceItem {
+  student_id: string;
+  student_name: string;
+  path_id: string;
+  task_id: string;
+  result: 'demonstrated' | 'emerging' | 'not_yet' | 'not_observed';
+  strategy_tags: string[];
+  teacher_observation?: string;
+  timestamp?: string;
+}
+
+export interface ClassroomPlan {
+  id: string;
+  class_id: string;
+  class_name: string;
+  grade: number;
+  lesson_topic: string;
+  total_students: number;
+  duration_minutes: number;
+  available_resources: string[];
+  status: 'draft' | 'ready' | 'active' | 'completed' | 'review';
+  created_at: string;
+  updated_at: string;
+  paths: InstructionalPath[];
+  timeline: LessonSegment[];
+  teacher_attention_budget: {
+    total_lesson_minutes: number;
+    available_direct_minutes: number;
+    allocated_direct_minutes: number;
+    unallocated_buffer_minutes: number;
+    whole_class_minutes: number;
+    independent_monitoring_minutes: number;
+  };
+  evidence_records: LessonEvidenceItem[];
+  teacher_notes?: string;
+}
+
+export interface ClassroomOrchestrationOverview {
+  class_id: string;
+  class_name: string;
+  grade: number;
+  lesson_topic: string;
+  duration_minutes: number;
+  total_students: number;
+  patterns_summary: {
+    path_id: string;
+    focus: string;
+    student_count: number;
+    attention_level: string;
+    sample_student: string;
+    rationale: string;
+  }[];
+  attention_breakdown: {
+    high: number;
+    moderate: number;
+    quick_check: number;
+    independent: number;
+  };
+  existing_plan?: ClassroomPlan;
+  available_resources: string[];
+}
+
+export interface OrchestrationBuildRequest {
+  lesson_topic?: string;
+  duration_minutes?: number;
+  available_resources?: string[];
+  custom_priorities?: Record<string, string>;
+}
+
+export interface LessonReviewData {
+  plan_id: string;
+  lesson_topic: string;
+  duration_minutes: number;
+  students_reached: string;
+  evidence_collected_count: number;
+  observations_logged_count: number;
+  path_summaries: {
+    path_id: string;
+    title: string;
+    student_count: number;
+    demonstrated: number;
+    emerging: number;
+    requires_review: number;
+  }[];
+  new_learning_signals: {
+    student_id: string;
+    student_name: string;
+    signal: string;
+    recommended_action: string;
+  }[];
+  plan_status: string;
 }
 
 export const api = new ApiService();

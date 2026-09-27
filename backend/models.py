@@ -257,3 +257,112 @@ class ClassroomDiagnosticOverview(BaseModel):
     patterns: List[ClassroomDiagnosticPattern] = []
     summary_guidance: str
 
+# ============================================================
+# PHASE 3 — CLASSROOM ORCHESTRATION MODELS
+# ============================================================
+
+class ClassroomActivity(BaseModel):
+    start_activity: str
+    guided_activity: str
+    independent_activity: str
+    exit_activity: str
+    materials_needed: List[str] = []
+
+class PathMembership(BaseModel):
+    student_id: str
+    student_name: str
+    current_focus: str
+    hypothesis_status: str
+    next_learning_move: str
+    evidence_basis: str
+    locked: bool = False
+
+class TeacherAttentionAllocation(BaseModel):
+    path_id: str
+    allocated_minutes: int
+    priority: Literal["required", "recommended", "quick_check", "independent"]
+    rationale: str
+
+class InstructionalPath(BaseModel):
+    id: str
+    title: str
+    learning_focus: str
+    domain: Literal["numeracy", "reading", "general"]
+    teacher_attention: Literal["required", "recommended", "quick_check", "independent"]
+    duration_minutes: int
+    student_ids: List[str] = []
+    students: List[PathMembership] = []
+    rationale: str
+    next_learning_move: str
+    activity: ClassroomActivity
+    exit_task_ids: List[str] = []
+
+class LessonSegment(BaseModel):
+    id: str
+    start_minute: int
+    end_minute: int
+    title: str
+    segment_type: Literal["whole_class", "teacher_focus", "quick_check", "peer_supported", "independent", "exit_evidence"]
+    active_path_id: Optional[str] = None
+    teacher_role: str
+    class_activity: str
+    students_involved_count: int
+
+class LessonEvidenceItem(BaseModel):
+    student_id: str
+    student_name: str
+    path_id: str
+    task_id: str
+    result: Literal["demonstrated", "emerging", "not_yet", "not_observed"]
+    strategy_tags: List[str] = []
+    teacher_observation: Optional[str] = None
+    timestamp: Optional[str] = None
+
+class ClassroomPlan(BaseModel):
+    id: str
+    class_id: str
+    class_name: str
+    grade: int
+    lesson_topic: str
+    total_students: int
+    duration_minutes: int = 40
+    available_resources: List[str] = ["Blackboard", "Textbook", "Notebook", "Printed worksheet"]
+    status: Literal["draft", "ready", "active", "completed", "review"] = "ready"
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    paths: List[InstructionalPath] = []
+    timeline: List[LessonSegment] = []
+    teacher_attention_budget: Dict[str, Any] = {}
+    evidence_records: List[LessonEvidenceItem] = []
+    teacher_notes: Optional[str] = None
+
+class ClassroomOrchestrationOverview(BaseModel):
+    class_id: str
+    class_name: str
+    grade: int
+    lesson_topic: str
+    duration_minutes: int
+    total_students: int
+    patterns_summary: List[Dict[str, Any]] = []
+    attention_breakdown: Dict[str, int] = {}
+    existing_plan: Optional[ClassroomPlan] = None
+    available_resources: List[str] = []
+
+class OrchestrationBuildRequest(BaseModel):
+    lesson_topic: Optional[str] = "Two-Digit Subtraction"
+    duration_minutes: Optional[int] = 40
+    available_resources: Optional[List[str]] = None
+    custom_priorities: Optional[Dict[str, str]] = None
+
+class PathUpdateRequest(BaseModel):
+    duration_minutes: Optional[int] = None
+    teacher_attention: Optional[str] = None
+    student_ids: Optional[List[str]] = None
+    activity_notes: Optional[str] = None
+
+class LessonEvidenceBatch(BaseModel):
+    plan_id: str
+    evidence: List[LessonEvidenceItem]
+    session_notes: Optional[str] = None
+
+

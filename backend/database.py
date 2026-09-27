@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import random
 from models import (
     Teacher,
@@ -11,11 +11,16 @@ from models import (
     ClassroomLearningMap,
     SkillDistribution,
     DiagnosticAnalysis,
-    ClassroomDiagnosticOverview
+    ClassroomDiagnosticOverview,
+    ClassroomPlan,
+    ClassroomOrchestrationOverview,
+    OrchestrationBuildRequest,
+    LessonEvidenceItem
 )
 from assessment_content import get_foundational_assessments, SKILL_DEFINITIONS
 from evidence_engine import compute_skill_evidence, determine_confidence_level, generate_grounded_narrative, structure_teacher_observation
 from diagnostic_engine import analyze_student_learning_gaps, build_classroom_diagnostic_overview
+from orchestration_engine import orchestration_engine
 
 class DataStore:
     def __init__(self):
@@ -32,6 +37,7 @@ class DataStore:
         self.observations: Dict[str, List[Observation]] = {} # student_id -> list of Observation
         self.fingerprints: Dict[str, LearningFingerprint] = {} # student_id -> LearningFingerprint
         self.diagnostics: Dict[str, DiagnosticAnalysis] = {} # student_id -> DiagnosticAnalysis
+        self.classroom_plans: Dict[str, ClassroomPlan] = {} # plan_id -> ClassroomPlan, and class_id -> latest plan
         self._seed_demo_data()
 
     def _seed_demo_data(self):
@@ -152,6 +158,9 @@ class DataStore:
         self.get_student_diagnostic("ST001", "subtraction")
         self.get_student_diagnostic("ST002", "paragraph_reading")
         self.get_student_diagnostic("ST003", "paragraph_reading")
+
+        # Seed initial Phase 3 Classroom Plan
+        self.build_classroom_plan(c_id)
 
     def _generate_student_seed_responses(self, s_id: str, archetype_idx: int, reading_items, numeracy_items):
         name = self.students[s_id].name
@@ -418,5 +427,70 @@ class DataStore:
             fingerprints=self.fingerprints
         )
 
+    def get_orchestration_overview(self, class_id: str) -> ClassroomOrchestrationOverview:
+        class_obj = self.classes.get(class_id)
+        students = [s for s in self.students.values() if s.class_id == class_id]
+        existing_plan = self.classroom_plans.get(class_id)
+        return orchestration_engine.get_orchestration_overview(
+            class_id=class_id,
+            class_name=class_obj.name if class_obj else "Class",
+            grade=class_obj.grade if class_obj else 3,
+            students=students,
+            diagnostics=self.diagnostics,
+            existing_plan=existing_plan
+        )
+
+    def build_classroom_plan(self, class_id: str, request: Optional[OrchestrationBuildRequest] = None) -> ClassroomPlan:
+        class_obj = self.classes.get(class_id)
+        students = [s for s in self.students.values() if s.class_id == class_id]
+        if not request:
+            request = OrchestrationBuildRequest()
+
+        # Ensure all Phase 2 diagnostics are seeded/loaded
+        for s in students:
+            if s.id not in self.diagnostics:
+                self.get_student_diagnostic(s.id)
+
+        plan = orchestration_engine.build_classroom_orchestration(
+            class_id=class_id,
+            class_name=class_obj.name if class_obj else "Class",
+            grade=class_obj.grade if class_obj else 3,
+            students=students,
+            fingerprints=self.fingerprints,
+            diagnostics=self.diagnostics,
+            request=request
+        )
+
+        self.classroom_plans[plan.id] = plan
+        self.classroom_plans[class_id] = plan
+        return plan
+
+    def get_orchestration_plan(self, plan_id: str) -> Optional[ClassroomPlan]:
+        if plan_id in self.classroom_plans:
+            return self.classroom_plans[plan_id]
+        # Check by class_id
+        return self.classroom_plans.get(plan_id)
+
+    def save_orchestration_plan(self, plan: ClassroomPlan) -> ClassroomPlan:
+        self.classroom_plans[plan.id] = plan
+        self.classroom_plans[plan.class_id] = plan
+        return plan
+
+    def record_lesson_evidence(self, plan_id: str, evidence_items: List[LessonEvidenceItem], notes: Optional[str] = None) -> ClassroomPlan:
+        plan = self.get_orchestration_plan(plan_id)
+        if not plan:
+            raise ValueError("Plan not found")
+        updated_plan = orchestration_engine.record_lesson_evidence(plan, evidence_items, notes)
+        self.save_orchestration_plan(updated_plan)
+        return updated_plan
+
+    def update_diagnostics_from_lesson(self, plan_id: str) -> Dict[str, Any]:
+        plan = self.get_orchestration_plan(plan_id)
+        if not plan:
+            raise ValueError("Plan not found")
+        result = orchestration_engine.update_diagnostics_from_lesson_evidence(plan, self.diagnostics)
+        return result
+
 db = DataStore()
+
 

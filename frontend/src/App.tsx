@@ -8,7 +8,66 @@ import { EvidenceExplorer } from './components/EvidenceExplorer';
 import { ClassroomLearningMap } from './components/ClassroomLearningMap';
 import { DiagnosticOverview } from './components/DiagnosticOverview';
 import { StudentGapAnalysis } from './components/StudentGapAnalysis';
-import { api } from './services/api';
+import { ClassroomOrchestration } from './components/ClassroomOrchestration';
+import { LiveClassroom } from './components/LiveClassroom';
+import { LessonReviewModal } from './components/LessonReviewModal';
+import { api, ClassroomPlan } from './services/api';
+
+function LiveClassroomScreen({
+  planId,
+  onNavigate
+}: {
+  planId: string;
+  onNavigate: (screen: string, param?: any) => void;
+}) {
+  const [plan, setPlan] = useState<ClassroomPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showReview, setShowReview] = useState(false);
+
+  useEffect(() => {
+    loadPlan();
+  }, [planId]);
+
+  const loadPlan = async () => {
+    setLoading(true);
+    try {
+      const p = await api.getOrchestrationPlan(planId);
+      setPlan(p);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !plan) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] text-xs font-sans text-[#666666]">
+        Initializing Live Classroom session telemetry...
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <LiveClassroom
+        plan={plan}
+        onNavigate={onNavigate}
+        onLessonComplete={() => setShowReview(true)}
+      />
+      {showReview && (
+        <LessonReviewModal
+          planId={plan.id}
+          onClose={() => {
+            setShowReview(false);
+            onNavigate('orchestration', { classId: plan.class_id });
+          }}
+          onNavigate={onNavigate}
+        />
+      )}
+    </>
+  );
+}
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<string>('dashboard');
@@ -101,6 +160,20 @@ export function App() {
             studentId={screenParams.studentId || 'ST001'} 
             skillId={screenParams.skillId}
             onNavigate={handleNavigate} 
+          />
+        )}
+
+        {currentScreen === 'orchestration' && (
+          <ClassroomOrchestration 
+            classId={screenParams.classId || 'CLS_G3A'} 
+            onNavigate={handleNavigate} 
+          />
+        )}
+
+        {currentScreen === 'live_classroom' && (
+          <LiveClassroomScreen
+            planId={screenParams.planId || 'CLS_G3A'}
+            onNavigate={handleNavigate}
           />
         )}
       </main>
