@@ -216,10 +216,10 @@ export function App() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-left">
             <p className="font-serif font-semibold text-[#17365D] text-sm">
-              AI Learning Conductor — Foundational Learning Assessment System
+              AI Learning Conductor — Foundational Classroom Intelligence System
             </p>
             <p className="text-[11px] text-[#737373] mt-0.5">
-              Phase 1.1: Institutional Clarity & Evidence-Grounded Learner Profiles
+              Phases 1–5: Assess · Diagnose · Orchestrate · Teach & Adapt · School Intelligence
             </p>
           </div>
           <div className="text-right text-[11px] text-[#737373]">

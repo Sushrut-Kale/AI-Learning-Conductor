@@ -101,11 +101,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
                   AI Learning Conductor
                 </span>
                 <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#8A2F35] bg-[#F1EEE7] px-1.5 py-0.2 border border-[#D9D3C7] rounded-xs">
-                  Phase 1.1
+                  Phases 1–5
                 </span>
               </div>
               <p className="text-[10px] font-sans text-[#666666] -mt-0.5 hidden sm:block">
-                Foundational Learning Assessment & Classroom Map
+                Assess · Diagnose · Orchestrate · Teach & Adapt · School Intelligence
               </p>
             </div>
           </div>

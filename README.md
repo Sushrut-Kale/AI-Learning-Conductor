@@ -1,186 +1,205 @@
-# AI Learning Conductor — Phase 1: Assess & Build the Learning Map
+# AI Learning Conductor
 
-> **Core Motto**: *“Before asking AI how to teach a child, first make sure AI understands what the child has actually demonstrated.”*
+> *"Before asking AI what to teach a child, first make sure AI understands what the child has actually demonstrated."*
 
-[![Platform](https://img.shields.io/badge/Platform-AI%20Learning%20Conductor-blue.svg)](https://github.com/Sushrut-Kale/AI-Learning-Conductor)
-[![Phase](https://img.shields.io/badge/Phase-1%3A%20Assess%20%26%20Map-emerald.svg)]()
-[![Stack](https://img.shields.io/badge/Tech%20Stack-FastAPI%20%7C%20React%20%7C%20IndexedDB%20%7C%20Gemini-indigo.svg)]()
-[![Grounding](https://img.shields.io/badge/AI%20Safety-Strict%20Evidence%20Grounding-success.svg)]()
-
----
-
-## 1. Problem & Vision
-
-In typical classrooms, teachers instruct 30+ children simultaneously without an actionable, evidence-based picture of individual foundational learning levels. 
-
-**AI Learning Conductor** solves this in **Phase 1** not by generating arbitrary exam scores, but by building a reliable, structured **Learning Map** for every child. This map preserves concrete assessment evidence to later power AI gap diagnosis (Phase 2), dynamic grouping (Phase 3), and differentiated instruction (Phase 4).
-
-### Key Rules of Phase 1:
-- **Evidence-First**: We preserve raw task evidence (`question_stimulus`, `expected_response`, `student_response`, `teacher_observation`).
-- **No Unsupported Conclusions**: Never label a child with vague psychological conclusions like *"Student is weak in mathematics"*. Instead: *"Student correctly solved single-digit addition but incorrectly solved 2-digit addition in 3 of 5 attempts."*
-- **Explainability**: Every statement in a student's profile features a **"Why?"** drill-down directly showing the exact questions, responses, and observations.
-- **Teacher In The Loop**: The teacher remains the definitive decision-maker with full authority to review, override, annotate, and verify profiles.
+[![Platform](https://img.shields.io/badge/Platform-AI%20Learning%20Conductor-17365D.svg)](https://github.com/Sushrut-Kale/AI-Learning-Conductor)
+[![Phases](https://img.shields.io/badge/Phases-1%20through%205-6B4226.svg)]()
+[![Stack](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20IndexedDB%20%7C%20Gemini-4B5563.svg)]()
+[![License](https://img.shields.io/badge/Responsible%20AI-Evidence--Grounded-2E7D32.svg)]()
 
 ---
 
-## 2. Technology Stack & Architecture
+## What Is This?
 
-- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS + Lucide Icons
-- **Offline Storage**: IndexedDB (via Dexie.js) with sync queue for resilient offline assessment in low-connectivity schools
-- **Backend**: FastAPI (Python 3.13) + Pydantic v2 validation + REST API
-- **AI Layer**: Google Gemini (via REST API) + Deterministic Heuristic Engine fallback with strict anti-hallucination validation against ground-truth response tables
+**AI Learning Conductor** is a five-phase, evidence-grounded classroom intelligence system for primary school teachers in low-resource government schools.
+
+It does not generate worksheets. It does not rank students. It does not replace teachers.
+
+Instead, it gives a teacher one thing that has always been missing at scale: **a verifiable, evidence-backed picture of where every child actually stands**, updated in real time, with every AI inference traceable back to the raw observation that triggered it.
+
+The core loop:
 
 ```
-+-----------------------------------------------------------------------+
-|                            TEACHER BROWSER                            |
-|                                                                       |
-|  +--------------------+   +-------------------+   +----------------+  |
-|  | Teacher Dashboard  |   | Class Overview    |   | Assessment UI  |  |
-|  +--------------------+   +-------------------+   +----------------+  |
-|  +--------------------+   +-------------------+   +----------------+  |
-|  | Learning Fingerprint   | Evidence Explorer |   | Learning Map   |  |
-|  +--------------------+   +-------------------+   +----------------+  |
-|                            |                          |               |
-|            (Offline Write) v                          v (Offline Read)|
-|       +-------------------------------------------------------+       |
-|       |     Client-Side IndexedDB (Dexie.js Offline Cache)    |       |
-|       +-------------------------------------------------------+       |
-|                                    | (Sync Queue)                     |
-+------------------------------------|----------------------------------+
-                                     v
-+-----------------------------------------------------------------------+
-|                            FASTAPI BACKEND                            |
-|                                                                       |
-|  +-----------------+   +--------------------+   +------------------+  |
-|  | Evidence Engine |-->| Anti-Hallucination |-->| Gemini LLM /     |  |
-|  | (Deterministic) |   | Validation Layer   |   | Heuristic Engine |  |
-|  +-----------------+   +--------------------+   +------------------+  |
-|                                                                       |
-|  +-----------------------------------------------------------------+  |
-|  | In-Memory / SQLite Evidence Datastore (30 Pre-Seeded Students)  |  |
-|  +-----------------------------------------------------------------+  |
-+-----------------------------------------------------------------------+
+SEE (assess evidence)
+  ↓
+UNDERSTAND (diagnose patterns)
+  ↓
+ACT (allocate classroom attention)
+  ↓
+LEARN (observe post-instruction change)
+  ↓
+SCALE (surface cross-classroom signals)
+  ↓
+HUMAN REVIEW (teacher remains final authority)
+  ↓
+NEW EVIDENCE
 ```
 
 ---
 
-## 3. The 6 Prototype Screens
+## Five Phases — One Continuous Workflow
 
-| Screen | Purpose | Key Features |
+| Phase | Name | Question Answered |
 |---|---|---|
-| **1. Teacher Dashboard** | Class management & completion tracking | Completion progress bar (Completed ✓, In Progress ◐, Not Assessed ○), 4 demo archetype launchers, principle banner. |
-| **2. Class Overview** | Classroom roster & student search | Search by student name/roll, status filter pills, student metadata, quick action triggers. |
-| **3. Assessment Interface** | Rapid, teacher-friendly assessment | Large high-contrast stimuli, 1-click marking (`✓ Correct` / `✗ Incorrect`), keyboard shortcuts (`1` / `2`), voice dictation for observations. |
-| **4. Student Learning Fingerprint** | Central Phase 1 deliverable | Categorized skills (`Demonstrated` / `Emerging` / `Not Yet`), quantitative metrics, grounded AI narrative, teacher override modal. |
-| **5. Evidence Explorer ("Why?")** | Deep explainability & audit trail | Full item-by-item response table, filter by skill, stimulus, target, actual student response, and teacher notes. |
-| **6. Classroom Learning Map** | Classroom-level foundational landscape | 2D Progression Matrix for Literacy & Numeracy, visual distribution bars, interactive student popover modals, Phase 2 transition roadmap. |
+| **1** | Assess & Build the Learning Map | What has the child actually demonstrated? |
+| **2** | Diagnose & Find the Gap | What learning pattern may explain the evidence? |
+| **3** | Orchestrate the Classroom | How should a teacher allocate limited attention? |
+| **4** | Teach, Observe & Adapt | What changed after instruction? |
+| **5** | School Intelligence & Early-Support Signals | What patterns are emerging across classrooms? |
 
 ---
 
-## 4. Assessment Frameworks (Inspired By)
-
-The assessment structure is inspired by recognized foundational literacy and numeracy principles:
-- **Literacy (EGRA / ASER Inspired)**:
-  1. *Letter Recognition* (Letters like `क`, `म`, `m`, `b`)
-  2. *Word Reading* (Words like `घर`, `शाळा`, `school`)
-  3. *Sentence Reading* (`मी रोज शाळेत जातो.`)
-  4. *Paragraph Reading* (Multi-sentence contextual passage)
-  5. *Comprehension* (Passage recall questions)
-- **Numeracy (EGMA / CBSE FLN Inspired)**:
-  1. *Number Recognition* (1-99)
-  2. *Number Comparison* (Which is greater / smaller)
-  3. *Basic Operations* (Single-digit addition & subtraction)
-  4. *2-Digit Addition* (With and without regrouping)
-  5. *2-Digit Subtraction* (With and without borrowing)
-  6. *Basic Multiplication* (Equal grouping concept)
-
-*(Notice: Frameworks are used as modular design references; this is not an official ASER or CBSE publication).*
-
----
-
-## 5. Demo Scenario (30 Students Pre-Seeded)
-
-The prototype includes a pre-seeded classroom: **"Grade 3 — Section A"** with 30 students:
-- **22 Completed Students** with diverse, realistic foundational profiles.
-- **2 In-Progress Students** for instant resumption.
-- **6 Not-Assessed Students** ready for live demonstration.
-
-### Key Archetypes for Live Demonstration:
-1. **Student A: Aarav Sharma** (`ST001`) — Strong Reading, Subtraction Emerging
-2. **Student B: Ananya Deshmukh** (`ST002`) — Strong Numeracy, Emerging Reading
-3. **Student C: Rohan Kulkarni** (`ST003`) — Emerging in both Literacy and Numeracy
-4. **Student D: Priya Gaikwad** (`ST004`) — Demonstrated in both domains
-5. **Live Assessment Candidate: Arjun Nalawade** (`ST025`) — Unassessed student to demonstrate live recording, voice observation, and fingerprint generation in under 60 seconds!
-
----
-
-## 6. What Is Explicitly Excluded In Phase 1
-
-To keep Phase 1 focused on **evidence collection and mapping**, the following belong strictly to later phases:
-- ❌ Dynamic grouping (Phase 3)
-- ❌ Lesson planning & automated worksheets (Phase 4)
-- ❌ Misconception diagnosis or disability labeling (Phase 2/5)
-- ❌ Student ranking or high-stakes judgment
-
----
-
-## 7. Quick Start Guide
+## Quick Start
 
 ### Prerequisites
-- Node.js (v18+)
-- Python (v3.10+)
 
-### 1. Start the Backend API
+- Node.js v18+
+- Python 3.10+
+- A Google Gemini API key (set as `GEMINI_API_KEY` environment variable)
+
+### 1. Backend
+
 ```bash
 cd backend
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
-Backend will be live at `http://localhost:8000`. API docs available at `http://localhost:8000/docs`.
 
-### 2. Start the Frontend Application
+API docs: `http://localhost:8000/docs`
+
+### 2. Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend will be live at `http://localhost:3000`.
+
+Application: `http://localhost:3000`
 
 ---
 
-## 8. Offline-First Verification
+## Architecture
 
-1. Click the **"Online"** badge in the top navigation bar to toggle **"Offline Mode"**.
-2. Conduct an assessment or adjust a student's profile.
-3. Observe responses saving seamlessly to local browser **IndexedDB**.
-4. Toggle back to **"Online"** and click **"Sync"** to merge locally cached records into the cloud database.
+```
++-----------------------------------------------------------+
+|                     TEACHER BROWSER                       |
+|                                                           |
+|  Phase 1: Assess   Phase 2: Diagnose   Phase 3: Orchestrate  |
+|  Phase 4: Teach    Phase 5: School Intelligence           |
+|                           |                               |
+|          (Offline write)  v         (Offline read)        |
+|    +-----------------------------------------------+      |
+|    |   IndexedDB (Dexie.js — offline-first cache)  |      |
+|    +-----------------------------------------------+      |
+|                           | (Sync Queue)                  |
++---------------------------|-------------------------------+
+                            v
++-----------------------------------------------------------+
+|                     FASTAPI BACKEND                       |
+|                                                           |
+|  Evidence Engine ──► Anti-Hallucination Validation        |
+|                              ──► Gemini / Heuristic Layer |
+|                                                           |
+|  Deterministic Engines: Diagnosis, Orchestration,         |
+|  Adaptation, School Intelligence                          |
+|                                                           |
+|  In-memory DataStore (30 pre-seeded students)             |
++-----------------------------------------------------------+
+```
+
+### Key Design Principles
+
+1. **Evidence-First**: Every AI output is grounded in concrete teacher-recorded evidence.
+2. **Deterministic Core**: Grouping, gap scoring, and signal detection are rules-based. AI adds synthesis, not decisions.
+3. **Teacher Authority**: Every AI inference can be reviewed, annotated, and overridden.
+4. **Explainability**: Every label links back to the exact question, response, and observation that produced it.
+5. **Offline-First**: The app functions without internet; data syncs when connectivity is restored.
 
 ---
 
-## 9. Future Roadmap: From Phase 1 to Phase 5
+## Technology Stack
 
-```
-+--------------------------------------------------------------------+
-|  PHASE 1 (Built): Assess & Build the Evidence Learning Map         |
-+--------------------------------------------------------------------+
-                                   |
-                                   v
-+--------------------------------------------------------------------+
-|  PHASE 2: Diagnose Gaps & Recommend Next Learning Moves            |
-+--------------------------------------------------------------------+
-                                   |
-                                   v
-+--------------------------------------------------------------------+
-|  PHASE 3: Orchestrate Classroom & Dynamic Differentiated Grouping  |
-+--------------------------------------------------------------------+
-                                   |
-                                   v
-+--------------------------------------------------------------------+
-|  PHASE 4: Adaptive Teaching & Daily Teacher Workflows              |
-+--------------------------------------------------------------------+
-                                   |
-                                   v
-+--------------------------------------------------------------------+
-|  PHASE 5: Advanced Foundational AI Layer                           |
-+--------------------------------------------------------------------+
-```
+| Layer | Technology |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
+| Offline Storage | IndexedDB via Dexie.js |
+| Backend | FastAPI (Python 3.13) + Pydantic v2 |
+| AI | Google Gemini (gemini-2.0-flash) |
+| Engines | Pure Python deterministic heuristics |
+
+---
+
+## Demo Scenario
+
+The prototype ships with a pre-seeded classroom: **Grade 3 — Section A** (30 students).
+
+### Key demo students:
+
+| ID | Name | Profile |
+|---|---|---|
+| ST001 | Aarav Sharma | Strong reading; subtraction gap → full diagnostic chain |
+| ST002 | Ananya Deshmukh | Strong numeracy; emerging reading |
+| ST003 | Rohan Kulkarni | Emerging both domains |
+| ST004 | Priya Gaikwad | Demonstrated both domains |
+| ST025 | Arjun Nalawade | Unassessed — use for live demo |
+
+### Recommended 5-minute demo path:
+
+1. **Dashboard** → see class completion status
+2. **Class Roster** → search "Aarav" → open fingerprint
+3. **Fingerprint** → click "Why?" on subtraction gap → Evidence Explorer
+4. **Diagnostics** → Aarav → Gap Analysis → hypothesis chain
+5. **Orchestration** → class plan → group allocation
+6. **Teach & Adapt** → start session → log observation → review
+7. **School Intelligence** → cross-class signals → mark reviewed
+
+---
+
+## Documentation
+
+Full documentation is in the [`/docs`](docs/) folder:
+
+| Document | Description |
+|---|---|
+| [Product Requirements](docs/PRD.md) | Full product specification |
+| [AI Architecture](docs/AI_ARCHITECTURE.md) | Gemini integration, safety constraints, anti-hallucination |
+| [Data Model](docs/DATA_MODEL.md) | Evidence schema and data flow |
+| [Responsible AI](docs/RESPONSIBLE_AI.md) | Transparency, human oversight, bias mitigations |
+| [Demo Script](docs/DEMO_SCRIPT.md) | 5-minute guided walkthrough script |
+| [API Reference](http://localhost:8000/docs) | Live FastAPI Swagger documentation |
+
+---
+
+## Assessment Frameworks (Reference)
+
+Inspired by recognised foundational literacy and numeracy frameworks:
+
+- **Literacy**: EGRA / ASER-India framework (letter → word → sentence → paragraph → comprehension)
+- **Numeracy**: EGMA / CBSE FLN framework (number recognition → comparison → operations → 2-digit → multiplication)
+
+*This is not an official ASER or CBSE publication. Frameworks are used as modular design references.*
+
+---
+
+## What Is Deliberately Excluded
+
+- ❌ Student rankings or scores
+- ❌ Automated lesson generation without teacher review
+- ❌ Disability labels or psychological conclusions
+- ❌ Teacher performance rankings
+- ❌ Any output not traceable to collected evidence
+
+---
+
+## Responsible AI Commitment
+
+Every AI-generated output in this system:
+
+1. Is clearly labelled as AI-generated
+2. Displays the evidence that grounded it
+3. Can be overridden by the teacher
+4. Is reviewed before triggering any school-level action
+5. Is never used alone to determine resource allocation
+
+See [`docs/RESPONSIBLE_AI.md`](docs/RESPONSIBLE_AI.md) for the full statement.
