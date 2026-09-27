@@ -190,7 +190,7 @@ export const LessonReviewModal: React.FC<LessonReviewModalProps> = ({
           {updateSuccess && (
             <div className="p-3 bg-[#EDF3EE] border border-[#C5D8C8] rounded-[4px] space-y-1 text-xs">
               <span className="font-bold text-[#3B5E43] block">
-                ✓ Phase 2 Diagnostic Engine Updated Successfully!
+                ✓ Diagnostic Insights Updated Successfully!
               </span>
               <p className="text-[#252525]">
                 New live lesson evidence has been incorporated into student profiles. Aarav Sharma's regrouping hypothesis has transitioned to <b>WEAKENED/RESOLVED</b>, and his Next Learning Move has progressed to multi-step word problems.
@@ -217,7 +217,7 @@ export const LessonReviewModal: React.FC<LessonReviewModalProps> = ({
                 onClick={handleUpdateDiagnostics}
                 disabled={isUpdating}
               >
-                {isUpdating ? 'Updating Phase 2...' : 'Update Diagnostic Analysis (Phase 2) →'}
+                {isUpdating ? 'Updating Insights...' : 'Update Learning Insights →'}
               </ActionButton>
             ) : (
               <ActionButton

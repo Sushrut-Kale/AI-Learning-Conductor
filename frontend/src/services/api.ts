@@ -1,6 +1,13 @@
 import { localDb, LocalResponse, LocalObservation } from './db';
 
-const API_BASE = '/api';
+// API base URL: configurable via VITE_API_BASE_URL for production deployment
+// In development with Vite proxy, this resolves to /api → http://localhost:8000/api
+// In production, set VITE_API_BASE_URL=https://your-backend.com in .env.local
+const _apiBase = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE = _apiBase ? `${_apiBase}/api` : '/api';
+
+export const IS_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
 
 export interface AssessmentItem {
   id: string;

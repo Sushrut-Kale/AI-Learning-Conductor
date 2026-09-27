@@ -2,6 +2,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import uuid
 import random
+import logging
+from config import DEMO_MODE
 from models import (
     Teacher,
     ClassRoom,
@@ -43,6 +45,8 @@ from orchestration_engine import orchestration_engine
 from adaptation_engine import adaptation_engine
 from school_intelligence_engine import school_intelligence_engine
 
+logger = logging.getLogger(__name__)
+
 class DataStore:
     def __init__(self):
         self.school_reviews: Dict[str, SchoolReview] = {}
@@ -56,14 +60,49 @@ class DataStore:
         self.students: Dict[str, Student] = {}
         self.assessments: Dict[str, Assessment] = {}
         self.responses: Dict[str, List[ResponseItem]] = {}  # student_id -> list of ResponseItem
-        self.observations: Dict[str, List[Observation]] = {} # student_id -> list of Observation
-        self.fingerprints: Dict[str, LearningFingerprint] = {} # student_id -> LearningFingerprint
-        self.diagnostics: Dict[str, DiagnosticAnalysis] = {} # student_id -> DiagnosticAnalysis
-        self.classroom_plans: Dict[str, ClassroomPlan] = {} # plan_id -> ClassroomPlan, and class_id -> latest plan
-        self.interventions: Dict[str, InterventionSession] = {} # session_id -> InterventionSession, and student_id -> session
-        self._seed_demo_data()
+        self.observations: Dict[str, List[Observation]] = {}  # student_id -> list of Observation
+        self.fingerprints: Dict[str, LearningFingerprint] = {}  # student_id -> LearningFingerprint
+        self.diagnostics: Dict[str, DiagnosticAnalysis] = {}  # student_id -> DiagnosticAnalysis
+        self.classroom_plans: Dict[str, ClassroomPlan] = {}  # plan_id -> ClassroomPlan
+        self.interventions: Dict[str, InterventionSession] = {}  # session_id -> InterventionSession
+        self.audit_log: List[Dict[str, Any]] = []  # Immutable audit trail
+
+        # Load assessments always (needed regardless of demo mode)
+        assessments_list = get_foundational_assessments(language="Marathi")
+        for asm in assessments_list:
+            self.assessments[asm.id] = asm
+
+        if DEMO_MODE:
+            logger.info("[DataStore] DEMO_MODE=true — seeding 30-student demonstration dataset")
+            self._seed_demo_data()
+        else:
+            logger.info("[DataStore] DEMO_MODE=false — starting with empty state for real school records")
+
+    def append_audit_log(
+        self,
+        action: str,
+        teacher_id: str = "TCH001",
+        student_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append an immutable audit log entry. Never modifies existing entries."""
+        entry = {
+            "id": str(uuid.uuid4())[:12],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "action": action,
+            "teacher_id": teacher_id,
+            "student_id": student_id,
+            "details": details or {},
+        }
+        self.audit_log.append(entry)
+        logger.info(f"[AUDIT] {action} | teacher={teacher_id} | student={student_id}")
 
     def _seed_demo_data(self):
+        """
+        Seeds the 30-student demonstration dataset.
+        This method runs ONLY when DEMO_MODE=true.
+        Demo data is clearly separated from production data paths.
+        """
         # 1. Create Class
         c_id = "CLS_G3A"
         class_obj = ClassRoom(
@@ -80,10 +119,7 @@ class DataStore:
         )
         self.classes[c_id] = class_obj
 
-        # 2. Load Assessments
-        assessments_list = get_foundational_assessments(language="Marathi")
-        for asm in assessments_list:
-            self.assessments[asm.id] = asm
+        # Assessments already loaded in __init__ — no need to reload here.
 
         # 3. 30 Realistic Students
         student_names = [

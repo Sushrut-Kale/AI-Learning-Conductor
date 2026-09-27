@@ -137,7 +137,7 @@ export const SchoolIntelligenceDashboard: React.FC<SchoolIntelligenceDashboardPr
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#17365D] bg-[#EAEFF5] px-2 py-0.5 border border-[#C5D3E3]">
-                Phase 5 • District & School Leadership Level
+                School & District Leadership Intelligence
               </span>
               <span className="text-xs text-[#666666] font-mono">
                 Academic Session: {overview.academic_session}
@@ -747,7 +747,7 @@ export const SchoolIntelligenceDashboard: React.FC<SchoolIntelligenceDashboardPr
               {/* Cross-Phase Evidence Sources (Section 10) */}
               <div>
                 <div className="font-serif font-bold text-sm text-[#17365D] mb-2">
-                  Multi-Phase Traceability Sources
+                  End-to-End Evidence Traceability
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                   {Object.entries(activeSignalEvidence.evidence_sources).map(([k, v]) => (

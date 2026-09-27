@@ -44,7 +44,7 @@ export const DiagnosticOverview: React.FC<DiagnosticOverviewProps> = ({ classId,
         onBreadcrumbClick={() => onNavigate('learning_map', { classId })}
         title="Classroom Diagnostic Overview"
         subtitle={`Grade 3 — Section A • Prerequisite Gap Identification & Evidence Patterns`}
-        badge="Phase 2: Diagnose & Decide"
+        badge="Diagnostic Intelligence"
         actions={
           <div className="flex items-center gap-2">
             <ActionButton 
@@ -63,13 +63,13 @@ export const DiagnosticOverview: React.FC<DiagnosticOverviewProps> = ({ classId,
         }
       />
 
-      {/* Core Phase 2 Principle Callout */}
+      {/* Core Principle Callout */}
       <div className="bg-[#F1EEE7] border-l-4 border-l-[#8A2F35] border border-[#D9D3C7] rounded-[4px] p-4 text-xs text-[#525252] leading-relaxed">
         <p className="font-bold text-[#8A2F35] uppercase tracking-wide text-[10px] mb-1">
-          Instructional Decision-Support System • Phase 2 Principles
+          Instructional Decision-Support System • Pedagogical Principles
         </p>
         <p>
-          Phase 1 measured <b>what</b> children demonstrated. Phase 2 analyzes the <b>pattern inside the errors</b> to formulate testable hypotheses regarding underlying prerequisite gaps. 
+          Baseline assessment measured <b>what</b> children demonstrated. Diagnostic intelligence analyzes the <b>pattern inside the errors</b> to formulate testable hypotheses regarding underlying prerequisite gaps. 
           The platform never assigns permanent labels or disability diagnoses, and distinguishes observed facts from AI hypotheses.
         </p>
       </div>
@@ -167,15 +167,15 @@ export const DiagnosticOverview: React.FC<DiagnosticOverviewProps> = ({ classId,
         </div>
       </div>
 
-      {/* Phase 3 Orchestration Handoff Banner (Section 20 & 43) */}
+      {/* Orchestration Transition Banner (Section 20 & 43) */}
       <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-5 text-xs text-[#525252] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <p className="font-bold text-[#17365D] uppercase tracking-wide text-[10px]">
-            Classroom Orchestration Handoff (Phase 2 → Phase 3)
+            Classroom Orchestration Transition
           </p>
           <p className="leading-relaxed">
-            Phase 2 has identified evidence-grounded learning patterns and Next Learning Moves. 
-            Proceed to <b>Phase 3: Orchestrate Classroom</b> to construct feasible teacher attention schedules, allocate limited direct instructional time, and launch Live Classroom Mode.
+            Evidence-grounded learning patterns and Next Learning Moves have been identified. 
+            Proceed to <b>Classroom Orchestration</b> to construct feasible teacher attention schedules, allocate limited direct instructional time, and launch Live Classroom Mode.
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export const DiagnosticOverview: React.FC<DiagnosticOverviewProps> = ({ classId,
           size="sm"
           onClick={() => onNavigate('orchestration', { classId })}
         >
-          Orchestrate Classroom (Phase 3) →
+          Orchestrate Classroom →
         </ActionButton>
       </div>
 

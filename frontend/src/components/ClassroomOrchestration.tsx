@@ -120,7 +120,7 @@ export const ClassroomOrchestration: React.FC<ClassroomOrchestrationProps> = ({
   if (loading || !plan) {
     return (
       <div className="flex items-center justify-center min-h-[50vh] text-xs font-sans text-[#666666]">
-        Analyzing Phase 1 & 2 learning evidence to construct constrained classroom action plan...
+        Analyzing student learning evidence to construct constrained classroom action plan...
       </div>
     );
   }
@@ -136,7 +136,7 @@ export const ClassroomOrchestration: React.FC<ClassroomOrchestrationProps> = ({
         onBreadcrumbClick={() => onNavigate('diagnostic_overview', { classId })}
         title="Classroom Orchestration"
         subtitle={`Grade 3 — Section A • 30 Students • 1 Teacher • ${plan.lesson_topic}`}
-        badge="Phase 3 Classroom Action"
+        badge="Classroom Orchestration"
         actions={
           <div className="flex items-center gap-2">
             <ActionButton
@@ -351,7 +351,7 @@ export const ClassroomOrchestration: React.FC<ClassroomOrchestrationProps> = ({
           </div>
 
           <p className="text-[11px] text-[#525252] leading-relaxed pt-1 border-t border-[#D9D3C7]">
-            <b>AI Rationale:</b> Path A is scheduled for intensive guided support because Phase 2 diagnostic evidence indicates an underlying prerequisite gap in place-value decomposition. Independent consolidation in Path D prevents instructional bottleneck.
+            <b>AI Rationale:</b> Path A is scheduled for intensive guided support because diagnostic evidence indicates an underlying prerequisite gap in place-value decomposition. Independent consolidation in Path D prevents instructional bottleneck.
           </p>
         </div>
 

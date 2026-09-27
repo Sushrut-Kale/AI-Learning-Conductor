@@ -219,7 +219,7 @@ export function App() {
               AI Learning Conductor — Foundational Classroom Intelligence System
             </p>
             <p className="text-[11px] text-[#737373] mt-0.5">
-              Phases 1–5: Assess · Diagnose · Orchestrate · Teach & Adapt · School Intelligence
+              Continuous Evidence Architecture: Assess · Diagnose · Orchestrate · Teach & Adapt · School Intelligence
             </p>
           </div>
           <div className="text-right text-[11px] text-[#737373]">

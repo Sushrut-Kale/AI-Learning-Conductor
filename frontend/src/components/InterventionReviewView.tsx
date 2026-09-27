@@ -79,7 +79,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
     if (!session) return;
     try {
       const res = await api.prepareNextLessonHandoff(session.class_id);
-      setHandoffSuccess(`Next classroom orchestration generated: "${res.lesson_topic}". Handing off to Phase 3...`);
+      setHandoffSuccess(`Next classroom orchestration generated: "${res.lesson_topic}". Handing off to Classroom Orchestration...`);
       setTimeout(() => {
         onNavigate('orchestration', { classId: session.class_id, planId: res.new_plan_id });
       }, 1500);
@@ -137,7 +137,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#8A2F35] bg-[#F2EDEA] px-2 py-0.5 border border-[#D9C7BE]">
-                Phase 4 Intervention Review
+                Intervention Review
               </span>
               <span className="text-xs text-[#666666] font-mono">Student ID: {session.student_id}</span>
             </div>
@@ -182,7 +182,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
             <div>
               <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#8A2F35] mb-2">
                 <span>BEFORE (Baseline)</span>
-                <span className="font-mono text-xs">Phase 1 & 2</span>
+                <span className="font-mono text-xs">Baseline Evidence</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="font-serif text-3xl font-bold text-[#8A2F35]">
@@ -220,7 +220,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
           <div className="bg-[#FCFBF8] border border-[#D9D3C7] p-4 flex flex-col justify-between">
             <div>
               <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#17365D] mb-2">
-                INSTRUCTION (Phase 3 Path)
+                INSTRUCTION (Active Path)
               </div>
               <div className="text-sm font-serif font-bold text-[#17365D]">
                 Place-Value Exchange
@@ -249,7 +249,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
             <div>
               <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#4F7658] mb-2">
                 <span>AFTER (Post-Check)</span>
-                <span className="font-mono text-xs">Phase 4</span>
+                <span className="font-mono text-xs">Post-Check</span>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="font-serif text-3xl font-bold text-[#4F7658]">
@@ -545,7 +545,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
               Closed-Loop Orchestration Intelligence
             </div>
             <div className="text-xs text-[#666666] mt-0.5">
-              Sync updated evidence into Phase 2 diagnostics & prepare next Phase 3 lesson plan.
+              Sync updated evidence into diagnostic profile & prepare next classroom lesson plan.
             </div>
           </div>
 
@@ -559,7 +559,7 @@ export const InterventionReviewView: React.FC<InterventionReviewViewProps> = ({
                   : 'bg-[#17365D] text-white border-[#0F243E] hover:bg-[#0F243E]'
               }`}
             >
-              {updatingPhase2 ? 'Updating Diagnostics...' : phase2Updated ? '✓ Phase 2 Diagnostic State Updated' : 'Update Diagnostic Analysis'}
+              {updatingPhase2 ? 'Updating Diagnostics...' : phase2Updated ? '✓ Diagnostic State Updated' : 'Update Diagnostic Analysis'}
             </button>
 
             <button

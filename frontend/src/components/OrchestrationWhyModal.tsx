@@ -25,7 +25,7 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
               Instructional Decision Traceability (Why?)
             </h3>
             <p className="text-[11px] text-[#D6E2EF]">
-              Evidence-based rationale linking Phase 1, Phase 2, and Phase 3 Orchestration
+              Evidence-based rationale linking Baseline Assessment, Diagnostic Insights, and Classroom Orchestration
             </p>
           </div>
           <button
@@ -62,13 +62,13 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
           {/* Reasoning Chain */}
           <div className="space-y-3">
             <h4 className="font-serif font-bold text-sm text-[#17365D] border-b border-[#D9D3C7] pb-1">
-              Multi-Phase Reasoning Chain
+              End-to-End Pedagogical Reasoning Chain
             </h4>
 
-            {/* Step 1: Phase 1 Evidence */}
+            {/* Step 1: Evidence Baseline */}
             <div className="border-l-2 border-[#17365D] pl-3 py-1 space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#17365D]">
-                Phase 1 — Observed Evidence Baseline
+                1. Observed Evidence Baseline
               </span>
               <p className="text-[12px] font-serif text-[#252525]">
                 {student
@@ -77,10 +77,10 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
               </p>
             </div>
 
-            {/* Step 2: Phase 2 Pattern & Hypothesis */}
+            {/* Step 2: Diagnostic Pattern & Hypothesis */}
             <div className="border-l-2 border-[#8A2F35] pl-3 py-1 space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A2F35]">
-                Phase 2 — Diagnostic Pattern & Prerequisite Gap
+                2. Diagnostic Pattern & Prerequisite Gap
               </span>
               <p className="text-[12px] font-serif text-[#252525]">
                 {path.rationale}
@@ -94,20 +94,20 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
               )}
             </div>
 
-            {/* Step 3: Phase 2 Next Learning Move */}
+            {/* Step 3: Next Learning Move */}
             <div className="border-l-2 border-[#4F7658] pl-3 py-1 space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#4F7658]">
-                Phase 2 — Recommended Next Learning Move
+                3. Recommended Next Learning Move
               </span>
               <p className="text-[12px] font-serif text-[#252525]">
                 {student ? student.next_learning_move : path.next_learning_move}
               </p>
             </div>
 
-            {/* Step 4: Phase 3 Orchestration Constraint */}
+            {/* Step 4: Teacher Attention Resource Allocation */}
             <div className="border-l-2 border-[#A87932] pl-3 py-1 space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#A87932]">
-                Phase 3 — Teacher Attention Resource Allocation
+                4. Teacher Attention Resource Allocation
               </span>
               <p className="text-[12px] font-serif text-[#252525]">
                 Given a single teacher and a 40-minute classroom session, direct teacher support is concentrated for {path.duration_minutes} minutes on {path.title}. Meanwhile, other paths operate with self-checking flashcards or textbook problem exercises.
@@ -124,7 +124,7 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
               {path.activity.exit_activity}
             </p>
             <p className="text-[11px] text-[#737373]">
-              Exit responses will immediately flow back into Phase 2 to update each student's diagnostic hypothesis.
+              Exit responses will immediately flow back into learning records to update each student's diagnostic hypothesis.
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export const OrchestrationWhyModal: React.FC<OrchestrationWhyModalProps> = ({
                 }}
                 className="text-xs font-semibold text-[#8A2F35] hover:underline"
               >
-                Inspect Full Phase 2 Gap Analysis →
+                Inspect Full Diagnostic Gap Analysis →
               </button>
             )}
           </div>

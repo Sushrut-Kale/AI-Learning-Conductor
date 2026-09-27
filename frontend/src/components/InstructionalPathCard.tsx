@@ -242,7 +242,7 @@ export const InstructionalPathCard: React.FC<InstructionalPathCardProps> = ({
                     <button
                       onClick={() => onViewStudentDiagnostic(st.student_id)}
                       className="text-[10px] text-[#17365D] hover:underline"
-                      title="Inspect Phase 2 Gap Analysis"
+                      title="Inspect Learning Gap Analysis"
                     >
                       Diagnose →
                     </button>

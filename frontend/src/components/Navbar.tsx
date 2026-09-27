@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, IS_DEMO_MODE } from '../services/api';
 
 interface NavbarProps {
   activeScreen: string;
@@ -7,10 +7,64 @@ interface NavbarProps {
   onRefreshData?: () => void;
 }
 
+// Maps nav module names to the activeScreen keys they correspond to
+const NAV_ITEMS: {
+  label: string;
+  screen: string;
+  activeScreens: string[];
+  param?: any;
+}[] = [
+  {
+    label: 'Overview',
+    screen: 'dashboard',
+    activeScreens: ['dashboard'],
+  },
+  {
+    label: 'Students',
+    screen: 'class_overview',
+    activeScreens: ['class_overview', 'fingerprint', 'evidence'],
+    param: { classId: 'CLS_G3A' },
+  },
+  {
+    label: 'Assessments',
+    screen: 'assessment',
+    activeScreens: ['assessment'],
+    param: { studentId: 'ST025' },
+  },
+  {
+    label: 'Learning Map',
+    screen: 'learning_map',
+    activeScreens: ['learning_map'],
+    param: { classId: 'CLS_G3A' },
+  },
+  {
+    label: 'Insights',
+    screen: 'diagnostic_overview',
+    activeScreens: ['diagnostic_overview', 'diagnostics', 'student_gap_analysis', 'learning_gap_graph'],
+    param: { classId: 'CLS_G3A' },
+  },
+  {
+    label: 'Teaching',
+    screen: 'teach_and_adapt',
+    activeScreens: [
+      'teach_and_adapt', 'teach_adapt',
+      'orchestration', 'live_classroom',
+      'live_teaching', 'intervention_review',
+    ],
+    param: { classId: 'CLS_G3A' },
+  },
+  {
+    label: 'School Intelligence',
+    screen: 'school_intelligence',
+    activeScreens: ['school_intelligence'],
+  },
+];
+
 export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefreshData }) => {
   const [isOffline, setIsOffline] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const checkSyncCount = async () => {
     try {
@@ -26,6 +80,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
     const interval = setInterval(checkSyncCount, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close more menu when clicking outside
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = () => setMoreOpen(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [moreOpen]);
 
   const toggleOffline = () => {
     const nextVal = !isOffline;
@@ -59,178 +121,192 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
     }
   };
 
+  const isActive = (item: typeof NAV_ITEMS[0]) =>
+    item.activeScreens.includes(activeScreen);
+
+  // Primary nav items (always visible)
+  const primaryNav = NAV_ITEMS.slice(0, 6); // Overview → Teaching
+  // Secondary nav items (in "More" dropdown at narrow widths)
+  const secondaryNav = NAV_ITEMS.slice(6); // School Intelligence
+
   return (
     <header className="bg-[#FCFBF8] border-b border-[#D9D3C7] sticky top-0 z-50">
-      
-      {/* Topmost Institutional Meta Strip */}
-      <div className="bg-[#17365D] text-[#FCFBF8] text-[11px] font-sans border-b border-[#0F243E]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1 flex items-center justify-between">
-          <div className="flex items-center gap-2 tracking-wide font-medium">
-            <span>FOUNDATIONAL LEARNING ASSESSMENT PLATFORM</span>
-            <span className="text-[#8FA8C4] hidden sm:inline">•</span>
-            <span className="text-[#D6E2EF] hidden sm:inline">Evidence-Based Classroom Support</span>
-          </div>
-          <div className="flex items-center gap-4 text-[#D6E2EF]">
-            <span className="hidden md:inline">Zilla Parishad Primary School, Shirur</span>
-            <button
-              onClick={handleResetDemo}
-              title="Reset classroom assessment records"
-              className="text-[#D6E2EF] hover:text-[#FCFBF8] underline text-[10px]"
-            >
-              Reset Demo Records
-            </button>
+
+      {/* Demonstration Environment Banner */}
+      {IS_DEMO_MODE && (
+        <div className="bg-[#17365D] border-b border-[#0F243E] text-[#B8CEDE] text-[10px] font-sans text-center py-0.5 tracking-widest uppercase">
+          Demonstration Environment — Sample classroom data. Not real student records.
+        </div>
+      )}
+
+      {/* Institutional Meta Strip */}
+      <div className="bg-[#1E3F6B] text-[#FCFBF8] text-[10.5px] font-sans border-b border-[#0F243E]">
+        <div className="max-w-screen-xl mx-auto px-4 lg:px-6 h-7 flex items-center justify-between">
+          <span className="tracking-wide font-medium uppercase text-[9.5px] text-[#A8BDD0]">
+            Foundational Learning Intelligence Platform
+          </span>
+          <div className="flex items-center gap-4 text-[#B8CEDE]">
+            <span className="hidden md:inline text-[9.5px]">Zilla Parishad Primary School, Shirur</span>
+            {IS_DEMO_MODE && (
+              <button
+                onClick={handleResetDemo}
+                title="Reset classroom assessment records to demo defaults"
+                className="text-[#B8CEDE] hover:text-[#FCFBF8] text-[9.5px] underline underline-offset-2 transition-colors"
+              >
+                Reset Demo
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Main Header & Navigation Strip */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          
-          {/* Institutional Identity Title */}
-          <div 
-            onClick={() => onNavigate('dashboard')} 
-            className="cursor-pointer select-none flex items-center gap-3"
+      {/* Main Header Row */}
+      <div className="max-w-screen-xl mx-auto px-4 lg:px-6">
+        <div className="flex items-center justify-between h-12 gap-4">
+
+          {/* Brand Identity */}
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="flex items-center gap-2.5 shrink-0 min-w-0 cursor-pointer group"
+            aria-label="AI Learning Conductor — Go to Overview"
           >
-            <div className="w-8 h-8 rounded-xs bg-[#17365D] text-[#FCFBF8] flex items-center justify-center font-serif font-bold text-sm border border-[#0F243E]">
+            <div className="w-7 h-7 shrink-0 bg-[#17365D] text-[#FCFBF8] flex items-center justify-center font-serif font-bold text-[11px] border border-[#0F243E] rounded-[3px]">
               LC
             </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-serif font-bold text-base sm:text-lg text-[#17365D] tracking-tight">
-                  AI Learning Conductor
-                </span>
-                <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#8A2F35] bg-[#F1EEE7] px-1.5 py-0.2 border border-[#D9D3C7] rounded-xs">
-                  Phases 1–5
-                </span>
+            <div className="min-w-0 hidden sm:block">
+              <div className="font-serif font-bold text-[#17365D] text-[14px] leading-tight tracking-tight whitespace-nowrap group-hover:text-[#0F243E] transition-colors">
+                AI Learning Conductor
               </div>
-              <p className="text-[10px] font-sans text-[#666666] -mt-0.5 hidden sm:block">
-                Assess · Diagnose · Orchestrate · Teach & Adapt · School Intelligence
-              </p>
+              <div className="text-[9.5px] font-sans text-[#737373] leading-none mt-0.5 whitespace-nowrap">
+                Evidence-Based Classroom Support
+              </div>
             </div>
-          </div>
+          </button>
 
-          {/* Navigation Links */}
-          <nav className="flex items-center space-x-1 sm:space-x-1.5">
-            <button
-              onClick={() => onNavigate('dashboard')}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
-                activeScreen === 'dashboard'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#252525] hover:bg-[#F1EEE7]'
-              }`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => onNavigate('class_overview', { classId: 'CLS_G3A' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
-                activeScreen === 'class_overview'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#252525] hover:bg-[#F1EEE7]'
-              }`}
-            >
-              Classes
-            </button>
-            <button
-              onClick={() => onNavigate('assessment', { studentId: 'ST025' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
-                activeScreen === 'assessment'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#252525] hover:bg-[#F1EEE7]'
-              }`}
-            >
-              Assessments
-            </button>
-            <button
-              onClick={() => onNavigate('learning_map', { classId: 'CLS_G3A' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] ${
-                activeScreen === 'learning_map'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#252525] hover:bg-[#F1EEE7]'
-              }`}
-            >
-              Learning Map
-            </button>
-            <button
-              onClick={() => onNavigate('diagnostic_overview', { classId: 'CLS_G3A' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
-                activeScreen === 'diagnostic_overview' || activeScreen === 'student_gap_analysis' || activeScreen === 'learning_gap_graph'
-                  ? 'bg-[#8A2F35] text-[#FCFBF8]'
-                  : 'text-[#8A2F35] bg-[#FAF4EB] border border-[#E5D8C1] hover:bg-[#F3E7D3]'
-              }`}
-            >
-              <span className="font-semibold">Diagnostics</span>
-              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 2</span>
-            </button>
-            <button
-              onClick={() => onNavigate('orchestration', { classId: 'CLS_G3A' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
-                activeScreen === 'orchestration' || activeScreen === 'live_classroom'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#17365D] bg-[#EAE5D9] border border-[#D9D3C7] hover:bg-[#DDD5C5]'
-              }`}
-            >
-              <span className="font-semibold">Orchestrate</span>
-              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 3</span>
-            </button>
-            <button
-              onClick={() => onNavigate('teach_and_adapt', { classId: 'CLS_G3A' })}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
-                activeScreen === 'teach_and_adapt' || activeScreen === 'live_teaching' || activeScreen === 'intervention_review'
-                  ? 'bg-[#4F7658] text-[#FCFBF8]'
-                  : 'text-[#4F7658] bg-[#EEF4EF] border border-[#CADBCE] hover:bg-[#DEEBE0]'
-              }`}
-            >
-              <span className="font-semibold">Teach & Adapt</span>
-              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 4</span>
-            </button>
-            <button
-              onClick={() => onNavigate('school_intelligence')}
-              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
-                activeScreen === 'school_intelligence'
-                  ? 'bg-[#17365D] text-[#FCFBF8]'
-                  : 'text-[#17365D] bg-[#FAF4EB] border border-[#E5D8C1] hover:bg-[#F3E7D3]'
-              }`}
-            >
-              <span className="font-semibold">School Intelligence</span>
-              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 5</span>
-            </button>
+          {/* Primary Navigation */}
+          <nav
+            className="flex items-center gap-0.5 overflow-hidden"
+            role="navigation"
+            aria-label="Main navigation"
+          >
+            {primaryNav.map((item) => {
+              const active = isActive(item);
+              return (
+                <button
+                  key={item.screen}
+                  onClick={() => onNavigate(item.screen, item.param)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`
+                    px-2.5 py-1.5 text-[11.5px] font-sans font-medium transition-colors whitespace-nowrap rounded-[3px]
+                    ${active
+                      ? 'bg-[#17365D] text-[#FCFBF8]'
+                      : 'text-[#374151] hover:bg-[#F1EEE7] hover:text-[#17365D]'
+                    }
+                  `}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+
+            {/* School Intelligence — always visible but last */}
+            {secondaryNav.map((item) => {
+              const active = isActive(item);
+              return (
+                <button
+                  key={item.screen}
+                  onClick={() => onNavigate(item.screen, item.param)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`
+                    px-2.5 py-1.5 text-[11.5px] font-sans font-medium transition-colors whitespace-nowrap rounded-[3px]
+                    hidden lg:block
+                    ${active
+                      ? 'bg-[#17365D] text-[#FCFBF8]'
+                      : 'text-[#374151] hover:bg-[#F1EEE7] hover:text-[#17365D]'
+                    }
+                  `}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+
+            {/* More ▾ dropdown for narrower screens */}
+            <div className="relative lg:hidden">
+              <button
+                onClick={(e) => { e.stopPropagation(); setMoreOpen(v => !v); }}
+                className="px-2.5 py-1.5 text-[11.5px] font-sans font-medium text-[#374151] hover:bg-[#F1EEE7] hover:text-[#17365D] rounded-[3px] transition-colors flex items-center gap-1"
+                aria-haspopup="true"
+                aria-expanded={moreOpen}
+              >
+                More
+                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M2 4l4 4 4-4" />
+                </svg>
+              </button>
+              {moreOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] shadow-md z-50 min-w-[160px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {secondaryNav.map((item) => {
+                    const active = isActive(item);
+                    return (
+                      <button
+                        key={item.screen}
+                        onClick={() => { onNavigate(item.screen, item.param); setMoreOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-[11.5px] font-sans font-medium transition-colors ${
+                          active
+                            ? 'bg-[#17365D] text-[#FCFBF8]'
+                            : 'text-[#374151] hover:bg-[#F1EEE7]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
-          {/* Teacher Status & Connectivity Indicator */}
-          <div className="flex items-center gap-3 pl-3 border-l border-[#D9D3C7]">
-            
-            {/* Status Line */}
+          {/* Right: Status + Sync + Teacher */}
+          <div className="flex items-center gap-3 shrink-0">
+
+            {/* Connectivity indicator */}
             <button
               onClick={toggleOffline}
-              title={isOffline ? "Currently in Offline Mode (click to connect)" : "Connected to School Network (click to simulate offline)"}
-              className="text-[11px] font-sans flex items-center gap-1.5 text-[#525252] hover:text-[#252525] transition-colors"
+              title={isOffline
+                ? 'Offline Mode active — click to reconnect'
+                : 'Connected to school server — click to simulate offline'}
+              className="flex items-center gap-1.5 text-[11px] font-sans text-[#525252] hover:text-[#252525] transition-colors"
+              aria-label={isOffline ? 'Offline Mode' : 'Connected'}
             >
-              <span className={`w-2 h-2 rounded-full ${isOffline ? 'bg-[#A87932]' : 'bg-[#4F7658]'}`} />
-              <span className="hidden lg:inline">{isOffline ? 'Offline Mode' : 'Connected'}</span>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${isOffline ? 'bg-[#A87932]' : 'bg-[#4F7658]'}`} />
+              <span className="hidden md:inline text-[10.5px]">
+                {isOffline ? 'Offline' : 'Connected'}
+              </span>
             </button>
 
-            {/* Sync Queue */}
+            {/* Pending sync badge */}
             {syncQueueCount > 0 && (
               <button
                 onClick={handleSyncNow}
                 disabled={isOffline || isSyncing}
-                className="text-[11px] font-sans font-medium px-2 py-0.5 rounded-xs bg-[#FAF4EB] text-[#8F6627] border border-[#E5D8C1] hover:bg-[#F3E7D3]"
-                title="Sync offline records to server"
+                title="Synchronise offline records to school server"
+                className="text-[10.5px] font-sans font-medium px-2 py-0.5 rounded-[3px] bg-[#FAF4EB] text-[#8F6627] border border-[#E5D8C1] hover:bg-[#F3E7D3] disabled:opacity-50 transition-colors whitespace-nowrap"
               >
-                {isSyncing ? 'Syncing...' : `${syncQueueCount} pending sync`}
+                {isSyncing ? 'Syncing…' : `${syncQueueCount} pending`}
               </button>
             )}
 
-            {/* Teacher ID */}
-            <div className="hidden sm:block text-right">
-              <p className="text-xs font-sans font-semibold text-[#17365D] leading-tight">Sunita Patil</p>
-              <p className="text-[10px] font-sans text-[#737373]">Grade 3 Teacher</p>
+            {/* Teacher identity */}
+            <div className="hidden md:block text-right border-l border-[#D9D3C7] pl-3">
+              <p className="text-[11px] font-sans font-semibold text-[#17365D] leading-tight">Sunita Patil</p>
+              <p className="text-[9.5px] font-sans text-[#737373] leading-tight">Grade 3 Teacher</p>
             </div>
 
           </div>
-
         </div>
       </div>
     </header>

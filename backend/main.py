@@ -1,9 +1,15 @@
 import os
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi import FastAPI, HTTPException, Request, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from config import CORS_ORIGINS, GEMINI_API_KEY, DEMO_MODE, ENVIRONMENT
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from models import (
     Teacher,
@@ -42,35 +48,62 @@ from models import (
     SchoolIntelligenceOverview
 )
 from database import db
-from ai_service import generate_learning_fingerprint_ai, GEMINI_API_KEY
+from ai_service import generate_learning_fingerprint_ai
 from assessment_content import get_foundational_assessments
 from diagnostic_engine import update_diagnostic_analysis_with_check
 
 app = FastAPI(
-    title="AI Learning Conductor - Phase 1 API",
-    description="Evidence-based Foundational Literacy & Numeracy Assessment & Learning Map Engine",
-    version="1.0.0"
+    title="AI Learning Conductor — Phases 1–5",
+    description=(
+        "Evidence-grounded Foundational Learning Intelligence Platform. "
+        "Phases: Assess | Diagnose | Orchestrate | Teach & Adapt | School Intelligence."
+    ),
+    version="1.0.0",
+    docs_url="/docs" if ENVIRONMENT != "production" else None,
+    redoc_url="/redoc" if ENVIRONMENT != "production" else None,
 )
 
-# Enable CORS for local Vite dev server and production clients
+# CORS — uses CORS_ORIGINS from config (never "*" in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Request-ID"],
 )
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Production-safe error handler — never exposes stack traces to clients."""
+    import uuid
+    request_id = str(uuid.uuid4())[:8]
+    logger.error(f"[{request_id}] Unhandled error on {request.url}: {type(exc).__name__}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Unable to process request", "request_id": request_id}
+    )
+
+@app.get("/health")
 @app.get("/api/health")
 async def health_check():
     return {
-        "status": "healthy",
-        "phase": "Phase 1: Assess & Build the Learning Map",
+        "status": "ok",
         "version": "1.0.0",
-        "llm_engine": "Gemini-2.5-Flash (Active)" if GEMINI_API_KEY else "Deterministic Local AI Heuristic (Offline Active)",
+        "environment": ENVIRONMENT,
+        "demo_mode": DEMO_MODE,
+        "ai_engine": "gemini" if GEMINI_API_KEY else "deterministic_fallback",
         "total_classes": len(db.classes),
-        "total_students": len(db.students)
+        "total_students": len(db.students),
     }
+
+
+@app.get("/health/ready")
+async def readiness_check():
+    """Readiness probe — confirms data store is initialised."""
+    if not db.classes or not db.students:
+        return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "data_store_empty"})
+    return {"status": "ready"}
 
 @app.get("/api/teacher", response_model=Teacher)
 async def get_teacher():
@@ -249,6 +282,13 @@ async def submit_assessment_session(payload: Dict[str, Any] = Body(...)):
     # Mark completed
     student.assessment_status = "completed"
 
+    # Audit log
+    db.append_audit_log(
+        action="assessment_submitted",
+        student_id=s_id,
+        details={"response_count": len(responses_data), "observation_count": len(observations_data)}
+    )
+
     # Update class counts
     class_id = student.class_id
     if class_id in db.classes:
@@ -308,6 +348,16 @@ async def teacher_override(student_id: str, request: TeacherOverrideRequest):
 
     fp.teacher_verified = True
     fp.teacher_notes = request.teacher_note
+
+    db.append_audit_log(
+        action="fingerprint_teacher_override",
+        student_id=student_id,
+        details={
+            "skill_id": request.skill_id,
+            "new_status": request.new_status,
+            "domain": request.domain,
+        }
+    )
 
     return {"status": "updated", "fingerprint": fp}
 
@@ -478,6 +528,12 @@ async def override_diagnostic_hypothesis(student_id: str, payload: Dict[str, Any
 
     analysis.teacher_override_note = note
     db.save_diagnostic(student_id, analysis)
+
+    db.append_audit_log(
+        action="diagnostic_hypothesis_override",
+        student_id=student_id,
+        details={"action": action, "note": note}
+    )
 
     return {"status": "override_recorded", "analysis": analysis}
 
@@ -900,5 +956,37 @@ async def get_school_timeline(school_id: str):
     return db.get_school_timeline(school_id)
 
 
+# ============================================================
+# AUDIT LOG & SYSTEM ENDPOINTS
+# ============================================================
+
+@app.get("/api/audit-log")
+async def get_audit_log(limit: int = 100):
+    """
+    Audit Log: Returns recent system actions for accountability and review.
+    In production, this should be restricted to authorised roles only.
+    """
+    entries = db.audit_log[-limit:]
+    return {"entries": list(reversed(entries)), "total": len(db.audit_log)}
 
 
+@app.get("/api/system/info")
+async def get_system_info():
+    """
+    System Information: Returns deployment mode and configuration status.
+    Safe to call — never returns secrets.
+    """
+    return {
+        "environment": ENVIRONMENT,
+        "demo_mode": DEMO_MODE,
+        "demo_mode_label": (
+            "DEMONSTRATION MODE — Pre-seeded classroom data. Not real student records."
+            if DEMO_MODE else
+            "PRODUCTION MODE — Real school records."
+        ),
+        "ai_available": bool(GEMINI_API_KEY),
+        "ai_fallback": "deterministic_heuristic_engine",
+        "version": "1.0.0",
+        "phases": ["Phase 1: Assess", "Phase 2: Diagnose", "Phase 3: Orchestrate",
+                   "Phase 4: Teach & Adapt", "Phase 5: School Intelligence"],
+    }

@@ -90,7 +90,7 @@ export const LiveClassroom: React.FC<LiveClassroomProps> = ({
               ACTIVE INSTRUCTIONAL SESSION
             </span>
             <span className="text-[10px] px-1.5 py-0.2 bg-white/10 rounded-xs">
-              Phase 3 Live Mode
+              Live Instruction Mode
             </span>
           </div>
           <h1 className="font-serif font-bold text-xl sm:text-2xl mt-1 tracking-tight">
@@ -213,7 +213,7 @@ export const LiveClassroom: React.FC<LiveClassroomProps> = ({
                 </p>
               </div>
               <span className="text-[10px] font-bold text-[#4F7658] uppercase">
-                Feeds into Phase 2
+                Feeds into Diagnostic Profile
               </span>
             </div>
 

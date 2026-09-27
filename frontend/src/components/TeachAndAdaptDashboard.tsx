@@ -37,7 +37,7 @@ export const TeachAndAdaptDashboard: React.FC<TeachAndAdaptDashboardProps> = ({
     setPreparingNextLesson(true);
     try {
       const res = await api.prepareNextLessonHandoff(classId);
-      setHandoffBanner(`Closed-Loop Handoff: Next classroom orchestration generated ("${res.lesson_topic}"). Redirecting to Phase 3 Orchestration...`);
+      setHandoffBanner(`Closed-Loop Handoff: Next classroom orchestration generated ("${res.lesson_topic}"). Redirecting to Classroom Orchestration...`);
       setTimeout(() => {
         onNavigate('orchestration', { classId, planId: res.new_plan_id });
       }, 1600);
@@ -52,7 +52,7 @@ export const TeachAndAdaptDashboard: React.FC<TeachAndAdaptDashboardProps> = ({
   if (loading || !overview) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center text-xs text-[#666666]">
-        Loading Phase 4 Teach, Observe & Adapt classroom intelligence...
+        Loading Classroom Teaching & Adaptation intelligence...
       </div>
     );
   }
@@ -80,7 +80,7 @@ export const TeachAndAdaptDashboard: React.FC<TeachAndAdaptDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-[#8A2F35] bg-[#F2EDEA] px-2 py-0.5 border border-[#D9C7BE]">
-                Phase 4 • Closed-Loop Intelligence
+                Continuous Teaching & Adaptation
               </span>
               <span className="text-xs text-[#666666] font-mono">
                 Session: {overview.session_date}
@@ -242,7 +242,7 @@ export const TeachAndAdaptDashboard: React.FC<TeachAndAdaptDashboardProps> = ({
               Current Instructional Paths
             </h2>
             <p className="text-[11px] text-[#666666]">
-              Phase 3 temporary instructional paths functioning as intervention episodes.
+              Structured classroom instructional paths functioning as intervention episodes.
             </p>
           </div>
           <span className="text-xs font-mono text-[#666666]">

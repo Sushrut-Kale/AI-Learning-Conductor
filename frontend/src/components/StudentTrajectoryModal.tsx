@@ -60,7 +60,7 @@ export const StudentTrajectoryModal: React.FC<StudentTrajectoryModalProps> = ({
 
         {loading ? (
           <div className="p-12 text-center text-sm font-sans text-[#666666]">
-            Compiling longitudinal learning trajectory across Phase 1, 2, 3 & 4...
+            Compiling longitudinal learning trajectory across assessment, diagnostic, instruction & intervention records...
           </div>
         ) : trajectory ? (
           <div className="p-6 space-y-6">
@@ -72,9 +72,9 @@ export const StudentTrajectoryModal: React.FC<StudentTrajectoryModalProps> = ({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
                 
-                {/* Phase 1 */}
+                {/* Stage 1: Assess */}
                 <div className="bg-[#FCFBF8] border border-[#D9D3C7] p-3">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase">Phase 1: Assess</div>
+                  <div className="text-[10px] font-bold text-[#666666] uppercase">Initial Assessment</div>
                   <div className="font-serif font-bold text-[#17365D] mt-1 text-sm">Baseline</div>
                   <div className="text-xs font-mono font-bold text-[#8A2F35] mt-1">
                     {trajectory.baseline_evidence}
@@ -82,27 +82,27 @@ export const StudentTrajectoryModal: React.FC<StudentTrajectoryModalProps> = ({
                   <div className="text-[10px] text-[#666666] mt-0.5">Assessed Tasks</div>
                 </div>
 
-                {/* Phase 2 */}
+                {/* Stage 2: Diagnose */}
                 <div className="bg-[#FCFBF8] border border-[#D9D3C7] p-3">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase">Phase 2: Diagnose</div>
+                  <div className="text-[10px] font-bold text-[#666666] uppercase">Diagnostic Insight</div>
                   <div className="font-serif font-bold text-[#8A2F35] mt-1 text-sm">Hypothesis</div>
                   <div className="text-[11px] font-medium text-[#252525] mt-1 leading-snug">
                     {trajectory.diagnostic_hypothesis}
                   </div>
                 </div>
 
-                {/* Phase 3 */}
+                {/* Stage 3: Orchestrate */}
                 <div className="bg-[#FCFBF8] border border-[#D9D3C7] p-3">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase">Phase 3: Orchestrate</div>
+                  <div className="text-[10px] font-bold text-[#666666] uppercase">Guided Instruction</div>
                   <div className="font-serif font-bold text-[#17365D] mt-1 text-sm">Path Assigned</div>
                   <div className="text-[11px] font-medium text-[#252525] mt-1 leading-snug">
                     {trajectory.instructional_path_title}
                   </div>
                 </div>
 
-                {/* Phase 4 */}
+                {/* Stage 4: Teach */}
                 <div className="bg-[#FCFBF8] border border-[#D9D3C7] p-3">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase">Phase 4: Teach</div>
+                  <div className="text-[10px] font-bold text-[#666666] uppercase">Intervention Check</div>
                   <div className="font-serif font-bold text-[#4F7658] mt-1 text-sm">Intervention Evidence</div>
                   <div className="text-xs font-mono font-bold text-[#4F7658] mt-1">
                     {trajectory.intervention_evidence}

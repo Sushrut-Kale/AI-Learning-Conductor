@@ -36,7 +36,7 @@ export const ClassroomLandscape: React.FC<ClassroomLandscapeProps> = ({
         {/* Whole Class Node */}
         <div className="w-64 bg-[#17365D] text-[#FCFBF8] border border-[#0F243E] rounded-[4px] p-3 text-center shadow-xs">
           <span className="text-[10px] uppercase font-bold tracking-wider block opacity-80">
-            Phase 1 & 2 Evaluated Cohort
+            Baseline Evaluated Cohort
           </span>
           <span className="font-serif font-bold text-base">
             Whole Class ({plan.total_students} Students)
@@ -140,7 +140,7 @@ export const ClassroomLandscape: React.FC<ClassroomLandscapeProps> = ({
 
       {/* Rationale explanation strip */}
       <div className="bg-[#FAF4EB] border border-[#E5D8C1] p-3 rounded-[4px] text-xs text-[#525252] leading-relaxed">
-        <b className="font-serif text-[#17365D]">Pedagogical Rationale:</b> Direct teacher attention is allocated to Path A because Phase 2 identified an unresolved prerequisite regrouping gap. Path D consolidates securely demonstrated skills independently in notebooks, preventing whole-class instructional drag while freeing the teacher's time.
+        <b className="font-serif text-[#17365D]">Pedagogical Rationale:</b> Direct teacher attention is allocated to Path A because diagnostic assessment identified an unresolved prerequisite regrouping gap. Path D consolidates securely demonstrated skills independently in notebooks, preventing whole-class instructional drag while freeing the teacher's time.
       </div>
     </div>
   );

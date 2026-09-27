@@ -313,14 +313,14 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
 
         <div className="pt-2 text-[11px] font-sans text-[#666666] border-t border-[#D9D3C7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <span className="italic">
-            “Phase 2 analyzes error patterns across these students, identifies potential prerequisite gaps, and recommends targeted diagnostic checks.”
+            “Diagnostic intelligence analyzes error patterns across these students, identifies potential prerequisite gaps, and recommends targeted diagnostic checks.”
           </span>
           <ActionButton
             variant="maroon"
             size="sm"
             onClick={() => onNavigate('diagnostic_overview', { classId })}
           >
-            Classroom Diagnostics (Phase 2) →
+            Classroom Diagnostics →
           </ActionButton>
         </div>
       </div>
