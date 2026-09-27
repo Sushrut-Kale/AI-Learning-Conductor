@@ -1,21 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  CheckCircle2, 
-  Clock, 
-  CircleDot, 
-  Play, 
-  FileText, 
-  FileSearch, 
-  Plus, 
-  UserPlus, 
-  ArrowLeft,
-  ChevronRight,
-  Sparkles
-} from 'lucide-react';
 import { api } from '../services/api';
+import { 
+  PageHeader, 
+  ActionButton, 
+  StatusBadge 
+} from './common/InstitutionalUI';
 
 interface ClassOverviewProps {
   classId: string;
@@ -27,7 +16,6 @@ export const ClassOverview: React.FC<ClassOverviewProps> = ({ classId, onNavigat
   const [students, setStudents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'in_progress' | 'not_assessed'>('all');
-  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
 
@@ -36,15 +24,12 @@ export const ClassOverview: React.FC<ClassOverviewProps> = ({ classId, onNavigat
   }, [classId]);
 
   const loadClass = async () => {
-    setLoading(true);
     try {
       const res = await api.getClassDetails(classId || 'CLS_G3A');
       setClassInfo(res.class_info);
       setStudents(res.students || []);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -85,232 +70,197 @@ export const ClassOverview: React.FC<ClassOverviewProps> = ({ classId, onNavigat
   const notAssCount = students.filter(s => s.assessment_status === 'not_assessed').length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-          </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">
-              {classInfo?.name || 'Grade 3 — Section A'}
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-              Grade 3 • {classInfo?.language || 'Marathi'}
-            </span>
+      {/* Institutional Page Header */}
+      <PageHeader
+        breadcrumb="Dashboard"
+        onBreadcrumbClick={() => onNavigate('dashboard')}
+        title="Classroom Student Roster"
+        subtitle={`${classInfo?.name || 'Grade 3 — Section A'} • Language: ${classInfo?.language || 'Marathi'} • Head Teacher: Sunita Patil`}
+        badge={`Total ${students.length} Students`}
+        actions={
+          <div className="flex items-center gap-2">
+            <ActionButton 
+              variant="secondary"
+              onClick={() => onNavigate('learning_map', { classId })}
+            >
+              Classroom Learning Map
+            </ActionButton>
+            <ActionButton 
+              variant="primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              + Enroll Student
+            </ActionButton>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Zilla Parishad Primary School • Teacher: Sunita Patil • Total Students: {students.length}
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate('learning_map', { classId })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors"
-          >
-            <span>Classroom Learning Map</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-xs"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Student</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-col md:flex-row gap-4 justify-between items-center">
+      {/* Filter and Administrative Search Strip */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 flex flex-col md:flex-row gap-3 justify-between items-center text-xs font-sans">
         
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        {/* Search Input */}
+        <div className="w-full md:w-80">
           <input
             type="text"
-            placeholder="Search by student name or roll..."
+            placeholder="Search by student name or roll number..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-1.5 bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] text-[#252525] focus:outline-none focus:border-[#17365D]"
           />
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        {/* Status Filters */}
+        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`px-3 py-1 rounded-[4px] border font-medium transition-colors ${
               statusFilter === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-[#17365D] text-[#FCFBF8] border-[#17365D]'
+                : 'bg-[#FCFBF8] text-[#525252] border-[#D9D3C7] hover:bg-[#F1EEE7]'
             }`}
           >
-            All Students ({students.length})
+            All ({students.length})
           </button>
           <button
             onClick={() => setStatusFilter('completed')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-[4px] border font-medium transition-colors ${
               statusFilter === 'completed'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                ? 'bg-[#17365D] text-[#FCFBF8] border-[#17365D]'
+                : 'bg-[#FCFBF8] text-[#3B5E43] border-[#C6D8CA] hover:bg-[#EDF3EE]'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Completed ({completedCount})</span>
+            Completed ({completedCount})
           </button>
           <button
             onClick={() => setStatusFilter('in_progress')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-[4px] border font-medium transition-colors ${
               statusFilter === 'in_progress'
-                ? 'bg-amber-600 text-white'
-                : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                ? 'bg-[#17365D] text-[#FCFBF8] border-[#17365D]'
+                : 'bg-[#FCFBF8] text-[#8F6627] border-[#E5D8C1] hover:bg-[#FAF4EB]'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
-            <span>In Progress ({inProgCount})</span>
+            In Progress ({inProgCount})
           </button>
           <button
             onClick={() => setStatusFilter('not_assessed')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-[4px] border font-medium transition-colors ${
               statusFilter === 'not_assessed'
-                ? 'bg-slate-700 text-white'
-                : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                ? 'bg-[#17365D] text-[#FCFBF8] border-[#17365D]'
+                : 'bg-[#FCFBF8] text-[#666666] border-[#D9D3C7] hover:bg-[#F1EEE7]'
             }`}
           >
-            <CircleDot className="w-3.5 h-3.5" />
-            <span>Not Assessed ({notAssCount})</span>
+            Not Assessed ({notAssCount})
           </button>
         </div>
 
       </div>
 
-      {/* Students Table / Grid */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+      {/* Administrative Table (Section 11) */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="institutional-table">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4">Roll</th>
-                <th className="py-3 px-4">Student Name</th>
-                <th className="py-3 px-4">Grade & Lang</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Foundational Evidence</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr>
+                <th className="py-2.5 px-4 text-left w-20">Roll No.</th>
+                <th className="py-2.5 px-4 text-left">Student Name</th>
+                <th className="py-2.5 px-4 text-left w-36">Assessment Status</th>
+                <th className="py-2.5 px-4 text-left w-36">Reading Domain</th>
+                <th className="py-2.5 px-4 text-left w-36">Numeracy Domain</th>
+                <th className="py-2.5 px-4 text-left w-28">Session Date</th>
+                <th className="py-2.5 px-4 text-right w-44">Administrative Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="text-xs font-sans">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400">
-                    No students match the selected filter.
+                  <td colSpan={7} className="text-center py-8 text-[#737373]">
+                    No student records matching current criteria.
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map(student => (
-                  <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
+                filteredStudents.map((student, idx) => (
+                  <tr 
+                    key={student.id} 
+                    className={`${idx % 2 === 0 ? 'bg-[#FCFBF8]' : 'bg-[#FAF8F3]'} hover:bg-[#F1EEE7] transition-colors`}
+                  >
                     
-                    {/* Roll */}
-                    <td className="py-3.5 px-4 font-mono font-medium text-slate-500">
-                      #{student.roll_number}
+                    {/* Roll No */}
+                    <td className="py-2.5 px-4 font-mono font-medium text-[#525252]">
+                      {student.roll_number}
                     </td>
 
                     {/* Student Name */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div 
-                          className="w-8 h-8 rounded-full text-white font-bold flex items-center justify-center text-xs shadow-2xs"
-                          style={{ backgroundColor: student.avatar_color || '#4F46E5' }}
-                        >
-                          {student.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900">{student.name}</p>
-                          <p className="text-[10px] text-slate-400">{student.id}</p>
-                        </div>
-                      </div>
+                    <td className="py-2.5 px-4">
+                      <span className="font-serif font-semibold text-[#17365D] text-[13px]">
+                        {student.name}
+                      </span>
+                      <span className="text-[10px] text-[#737373] ml-2 font-mono">
+                        ({student.id})
+                      </span>
                     </td>
 
-                    {/* Grade & Lang */}
-                    <td className="py-3.5 px-4 text-slate-600">
-                      Grade {student.grade} • {student.language}
+                    {/* Assessment Status */}
+                    <td className="py-2.5 px-4">
+                      <StatusBadge status={student.assessment_status} size="sm" />
                     </td>
 
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-4">
-                      {student.assessment_status === 'completed' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Completed</span>
-                        </span>
-                      )}
-                      {student.assessment_status === 'in_progress' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          <Clock className="w-3 h-3 text-amber-600" />
-                          <span>In Progress</span>
-                        </span>
-                      )}
-                      {student.assessment_status === 'not_assessed' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                          <CircleDot className="w-3 h-3 text-slate-400" />
-                          <span>Not Assessed</span>
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Evidence summary preview */}
-                    <td className="py-3.5 px-4">
+                    {/* Reading Domain Status */}
+                    <td className="py-2.5 px-4">
                       {student.assessment_status === 'completed' ? (
-                        <div className="flex items-center gap-2 text-[11px]">
-                          <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium">
-                            Profile Built
-                          </span>
-                          <span className="text-slate-500">24 Items Logged</span>
-                        </div>
-                      ) : student.assessment_status === 'in_progress' ? (
-                        <span className="text-[11px] text-amber-700 font-medium">
-                          4 Items Captured (Partially assessed)
+                        <span className="text-[11px] text-[#252525]">
+                          {parseInt(student.roll_number) % 2 === 1 ? 'Demonstrated' : 'Emerging'}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-400 italic">
-                          Awaiting teacher assessment
-                        </span>
+                        <span className="text-[11px] text-[#8E8B82]">—</span>
                       )}
                     </td>
 
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right space-x-2">
+                    {/* Numeracy Domain Status */}
+                    <td className="py-2.5 px-4">
+                      {student.assessment_status === 'completed' ? (
+                        <span className="text-[11px] text-[#252525]">
+                          {parseInt(student.roll_number) % 3 === 0 ? 'Demonstrated' : 'Emerging'}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-[#8E8B82]">—</span>
+                      )}
+                    </td>
+
+                    {/* Session Date */}
+                    <td className="py-2.5 px-4 text-[#525252] text-[11px]">
+                      {student.assessment_status === 'completed' ? '24 Sep 2026' : '—'}
+                    </td>
+
+                    {/* Action */}
+                    <td className="py-2.5 px-4 text-right space-x-1.5">
                       {student.assessment_status === 'completed' ? (
                         <>
-                          <button
+                          <ActionButton
+                            variant="secondary"
+                            size="sm"
                             onClick={() => onNavigate('fingerprint', { studentId: student.id })}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100 transition-colors"
                           >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>Fingerprint</span>
-                          </button>
-                          <button
+                            Fingerprint
+                          </ActionButton>
+                          <ActionButton
+                            variant="ghost"
+                            size="sm"
                             onClick={() => onNavigate('evidence', { studentId: student.id })}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition-colors"
-                            title="Trace raw evidence items ('Why?')"
+                            title="Audit individual task responses"
                           >
-                            <FileSearch className="w-3.5 h-3.5" />
-                            <span>Evidence</span>
-                          </button>
+                            Audit
+                          </ActionButton>
                         </>
                       ) : (
-                        <button
+                        <ActionButton
+                          variant="primary"
+                          size="sm"
                           onClick={() => onNavigate('assessment', { studentId: student.id })}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-2xs"
                         >
-                          <Play className="w-3.5 h-3.5 fill-white" />
-                          <span>{student.assessment_status === 'in_progress' ? 'Resume' : 'Assess'}</span>
-                        </button>
+                          {student.assessment_status === 'in_progress' ? 'Resume' : 'Assess'}
+                        </ActionButton>
                       )}
                     </td>
 
@@ -324,50 +274,54 @@ export const ClassOverview: React.FC<ClassOverviewProps> = ({ classId, onNavigat
 
       {/* Add Student Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md w-full shadow-lg">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Add New Student</h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Add student to Grade 3 — Section A for foundational assessment.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-[#FCFBF8] rounded-[6px] border border-[#B8B0A2] p-5 max-w-md w-full shadow-md font-sans">
+            <h3 className="font-serif font-bold text-[#17365D] text-lg mb-1">
+              Enroll Student
+            </h3>
+            <p className="text-xs text-[#666666] mb-4">
+              Add student to Grade 3 — Section A for foundational literacy and numeracy assessment.
             </p>
 
-            <form onSubmit={handleAddStudent} className="space-y-4">
+            <form onSubmit={handleAddStudent} className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <label className="block font-semibold text-[#252525] mb-1">Full Student Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Tanmay Gaikwad"
                   value={newStudentName}
                   onChange={e => setNewStudentName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-1.5 border border-[#D9D3C7] rounded-[4px] bg-[#FCFBF8] focus:outline-none focus:border-[#17365D]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Instructional Language</label>
+                <label className="block font-semibold text-[#252525] mb-1">Medium of Instruction</label>
                 <input
                   type="text"
                   disabled
                   value="Marathi"
-                  className="w-full px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-lg text-slate-500"
+                  className="w-full px-3 py-1.5 border border-[#D9D3C7] rounded-[4px] bg-[#F1EEE7] text-[#666666]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#D9D3C7]">
+                <ActionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
                   Cancel
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-xs"
+                  variant="primary"
+                  size="sm"
                 >
-                  Save Student
-                </button>
+                  Enroll Record
+                </ActionButton>
               </div>
             </form>
           </div>

@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  XCircle, 
-  Filter, 
-  ShieldCheck, 
-  FileText, 
-  Clock, 
-  MessageSquare,
-  Search,
-  BookOpen,
-  Calculator
-} from 'lucide-react';
 import { api } from '../services/api';
+import { 
+  PageHeader, 
+  ActionButton 
+} from './common/InstitutionalUI';
 
 interface EvidenceExplorerProps {
   studentId: string;
@@ -47,11 +38,8 @@ export const EvidenceExplorer: React.FC<EvidenceExplorerProps> = ({
 
   if (loading || !evidenceData) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Auditing assessment evidence...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh] text-xs font-sans text-[#666666]">
+        Compiling task-level evidence audit records...
       </div>
     );
   }
@@ -68,171 +56,146 @@ export const EvidenceExplorer: React.FC<EvidenceExplorerProps> = ({
   const accuracyPct = totalAttempted > 0 ? Math.round((correctCount / totalAttempted) * 100) : 0;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 font-sans">
       
-      {/* Top Breadcrumb & Header */}
-      <div>
-        <button
-          onClick={() => onNavigate('fingerprint', { studentId })}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Learning Fingerprint
-        </button>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Evidence Explorer ('Why?')
-          </h1>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            Strict Explainability
-          </span>
-        </div>
-        <p className="text-xs text-slate-500">
-          Trace every Learning Fingerprint statement back to raw stimuli, child responses, and teacher notes.
+      {/* Institutional Page Header */}
+      <PageHeader
+        breadcrumb="Learning Fingerprint"
+        onBreadcrumbClick={() => onNavigate('fingerprint', { studentId })}
+        title="Evidence Record"
+        subtitle={`Student: ${student?.name} (${student?.id}) • Grade ${student?.grade} • Total Logged Tasks: ${totalAttempted}`}
+        badge="Audit Trail"
+        actions={
+          <ActionButton 
+            variant="secondary"
+            onClick={() => onNavigate('fingerprint', { studentId })}
+          >
+            ← Return to Fingerprint
+          </ActionButton>
+        }
+      />
+
+      {/* Explanatory Policy Callout (Section 15) */}
+      <div className="bg-[#F1EEE7] border-l-4 border-l-[#17365D] border border-[#D9D3C7] rounded-[4px] p-4 text-xs text-[#525252] leading-relaxed">
+        <p className="font-bold text-[#17365D] uppercase tracking-wide text-[10px] mb-1">
+          Data Provenance & Audit Protocol
+        </p>
+        <p>
+          Every classification statement in the Learning Fingerprint is strictly verifiable against the individual task records below. 
+          No probabilistic inference or pedagogical extrapolation is permitted without direct task evidence.
         </p>
       </div>
 
-      {/* Grounding Principles Banner */}
-      <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-        <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-        <div className="text-xs text-emerald-900 leading-relaxed">
-          <p className="font-bold mb-0.5">Section 12: Evidence-First Explainability Principle</p>
-          <p>
-            No pedagogical claim is made without verifiable task-level audit records. When the system states 
-            “Paragraph reading is emerging”, this dashboard proves the exact items completed and missed.
-          </p>
+      {/* Summary Metrics Strip */}
+      <div className="grid grid-cols-3 gap-3 text-center text-xs">
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3">
+          <p className="text-[10px] uppercase tracking-wider text-[#666666] font-semibold">Total Tasks Logged</p>
+          <p className="font-serif font-bold text-xl text-[#17365D] mt-0.5">{totalAttempted}</p>
+        </div>
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3">
+          <p className="text-[10px] uppercase tracking-wider text-[#666666] font-semibold">Demonstrated Correct</p>
+          <p className="font-serif font-bold text-xl text-[#3B5E43] mt-0.5">{correctCount}</p>
+        </div>
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3">
+          <p className="text-[10px] uppercase tracking-wider text-[#666666] font-semibold">Demonstrated Rate</p>
+          <p className="font-serif font-bold text-xl text-[#17365D] mt-0.5">{accuracyPct}%</p>
         </div>
       </div>
 
-      {/* Student Meta & Audit Summary Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
-        {/* Student Card */}
-        <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-2xs">
-            {student?.name?.charAt(0) || 'S'}
-          </div>
-          <div>
-            <h2 className="font-bold text-slate-900 text-sm">{student?.name}</h2>
-            <p className="text-[11px] text-slate-500">
-              Grade {student?.grade} • {student?.language} • #{student?.id}
-            </p>
-          </div>
-        </div>
-
-        {/* Audit Stats */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs text-center">
-          <p className="text-[10px] text-slate-400 font-semibold uppercase">Total Tasks Recorded</p>
-          <p className="text-xl font-bold text-slate-800">{totalAttempted}</p>
-          <p className="text-[10px] text-slate-500">Audit Items</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs text-center">
-          <p className="text-[10px] text-slate-400 font-semibold uppercase">Demonstrated Accuracy</p>
-          <p className="text-xl font-bold text-emerald-700">{accuracyPct}%</p>
-          <p className="text-[10px] text-emerald-600">{correctCount} of {totalAttempted} Correct</p>
-        </div>
-
-      </div>
-
-      {/* Filter by Skill */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-700">Filter by Foundational Skill:</span>
-        </div>
-
+      {/* Skill Filter Dropdown */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 flex flex-col sm:flex-row items-baseline justify-between gap-3 text-xs">
+        <label className="font-semibold text-[#252525]">
+          Filter Evidence by Foundational Skill:
+        </label>
         <select
           value={selectedSkillFilter}
           onChange={e => setSelectedSkillFilter(e.target.value)}
-          className="px-3 py-1.5 text-xs font-semibold border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 border border-[#D9D3C7] rounded-[4px] bg-[#FCFBF8] text-[#252525] focus:outline-none focus:border-[#17365D]"
         >
-          <option value="all">All Skills ({raw_responses.length} Tasks)</option>
+          <option value="all">All Evaluated Skills ({raw_responses.length} Tasks)</option>
           {evidence_breakdown.map((s: any) => (
             <option key={s.skill_id} value={s.skill_id}>
-              {s.skill_title} ({s.correct}/{s.total} correct - {s.status.toUpperCase()})
+              {s.skill_title} ({s.correct}/{s.total} tasks correct — {s.status.toUpperCase()})
             </option>
           ))}
         </select>
       </div>
 
-      {/* Evidence Items Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+      {/* Chronological Audit Table (Section 15) */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="institutional-table">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4">Task ID</th>
-                <th className="py-3 px-4">Domain & Skill</th>
-                <th className="py-3 px-4">Stimulus Presented</th>
-                <th className="py-3 px-4">Expected Target</th>
-                <th className="py-3 px-4">Student Response</th>
-                <th className="py-3 px-4">Result</th>
-                <th className="py-3 px-4">Teacher Observation</th>
+              <tr>
+                <th className="py-2.5 px-3 text-left w-28">Task Code</th>
+                <th className="py-2.5 px-3 text-left">Domain & Skill</th>
+                <th className="py-2.5 px-3 text-left">Stimulus Presented</th>
+                <th className="py-2.5 px-3 text-left">Expected Target</th>
+                <th className="py-2.5 px-3 text-left">Recorded Response</th>
+                <th className="py-2.5 px-3 text-center w-16">Result</th>
+                <th className="py-2.5 px-3 text-left w-52">Teacher Observation</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="text-xs">
               {filteredResponses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400">
-                    No task records match this filter.
+                  <td colSpan={7} className="text-center py-8 text-[#737373]">
+                    No task records registered for this specific skill.
                   </td>
                 </tr>
               ) : (
                 filteredResponses.map((r: any) => (
-                  <tr key={r.id || r.question_id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={r.id || r.question_id} className="hover:bg-[#F1EEE7] transition-colors">
                     
-                    {/* ID */}
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-500">
+                    {/* Task ID */}
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-[#525252]">
                       {r.question_id}
                     </td>
 
                     {/* Skill */}
-                    <td className="py-3 px-4">
-                      <span className="capitalize font-semibold text-slate-800">
+                    <td className="py-2.5 px-3">
+                      <span className="font-medium text-[#17365D]">
                         {r.skill_id.replace(/_/g, ' ')}
                       </span>
-                      <p className="text-[10px] text-slate-400 capitalize">{r.domain}</p>
+                      <span className="text-[10px] text-[#737373] uppercase ml-1.5 font-semibold">
+                        [{r.domain}]
+                      </span>
                     </td>
 
                     {/* Stimulus */}
-                    <td className="py-3 px-4 max-w-xs font-medium text-slate-900 truncate">
-                      {r.expected_response && r.expected_response.length < 20 ? r.expected_response : `Task Item ${r.question_id}`}
+                    <td className="py-2.5 px-3 text-[#252525] font-serif font-medium">
+                      {r.expected_response && r.expected_response.length < 25 ? r.expected_response : `Task Item ${r.question_id}`}
                     </td>
 
                     {/* Expected */}
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-[#666666]">
                       {r.expected_response}
                     </td>
 
                     {/* Student Response */}
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-900 font-semibold">
+                    <td className="py-2.5 px-3 font-mono text-[11px] text-[#252525] font-semibold">
                       {r.student_response}
                     </td>
 
                     {/* Result */}
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3 text-center">
                       {r.correct ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Correct</span>
+                        <span className="text-[#3B5E43] font-bold text-xs bg-[#EDF3EE] px-1.5 py-0.5 rounded-xs border border-[#C6D8CA]">
+                          ✓
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-rose-700 font-bold text-[11px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                          <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                          <span>Incorrect</span>
+                        <span className="text-[#873F3F] font-bold text-xs bg-[#F9EDED] px-1.5 py-0.5 rounded-xs border border-[#DFC1C1]">
+                          ✕
                         </span>
                       )}
                     </td>
 
                     {/* Teacher Observation */}
-                    <td className="py-3 px-4 text-slate-600 italic text-[11px] max-w-xs">
+                    <td className="py-2.5 px-3 text-[11px] text-[#525252]">
                       {r.teacher_observation ? (
-                        <div className="flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                          <MessageSquare className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>“{r.teacher_observation}”</span>
-                        </div>
+                        <span className="italic">“{r.teacher_observation}”</span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-[#B8B0A2]">—</span>
                       )}
                     </td>
 

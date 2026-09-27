@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, 
-  Map, 
-  BookOpen, 
-  Calculator, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle, 
-  CircleDot, 
-  Users, 
-  Sparkles, 
-  ArrowRight,
-  Info,
-  X
-} from 'lucide-react';
 import { api, ClassroomLearningMap as MapType } from '../services/api';
+import { 
+  PageHeader, 
+  ActionButton 
+} from './common/InstitutionalUI';
 
 interface ClassroomLearningMapProps {
   classId: string;
@@ -25,7 +14,6 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
   const [learningMap, setLearningMap] = useState<MapType | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modal for inspecting students in a cell
   const [modalData, setModalData] = useState<{
     skillTitle: string;
     category: string;
@@ -69,11 +57,8 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
 
   if (loading || !learningMap) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Synthesizing Classroom Learning Map...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh] text-xs font-sans text-[#666666]">
+        Compiling Classroom Learning Map matrix...
       </div>
     );
   }
@@ -86,189 +71,144 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
     const notAssPct = (notAss / tot) * 100;
 
     return (
-      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
-        <div style={{ width: `${demPct}%` }} className="bg-emerald-500 h-full" title={`Demonstrated: ${dem}`} />
-        <div style={{ width: `${emgPct}%` }} className="bg-amber-400 h-full" title={`Emerging: ${emg}`} />
-        <div style={{ width: `${notYetPct}%` }} className="bg-rose-500 h-full" title={`Not Yet: ${notYet}`} />
-        <div style={{ width: `${notAssPct}%` }} className="bg-slate-300 h-full" title={`Not Assessed: ${notAss}`} />
+      <div className="h-2 w-full bg-[#EFECE5] rounded-xs overflow-hidden flex border border-[#D9D3C7]">
+        <div style={{ width: `${demPct}%` }} className="bg-[#4F7658] h-full" title={`Demonstrated: ${dem}`} />
+        <div style={{ width: `${emgPct}%` }} className="bg-[#A87932] h-full" title={`Emerging: ${emg}`} />
+        <div style={{ width: `${notYetPct}%` }} className="bg-[#9A4A4A] h-full" title={`Not Yet: ${notYet}`} />
+        <div style={{ width: `${notAssPct}%` }} className="bg-[#D5CFC3] h-full" title={`Not Assessed: ${notAss}`} />
       </div>
     );
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 font-sans">
       
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-          </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Classroom Learning Map
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-              {learningMap.class_name} • Grade {learningMap.grade}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500">
-            Foundational learning landscape across literacy and numeracy.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate('class_overview', { classId })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Class Roster ({learningMap.total_students})</span>
-          </button>
-          <button
-            onClick={() => onNavigate('assessment', { studentId: 'ST025' })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 shadow-xs"
-          >
-            <span>Assess Next Student</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Classroom Status Stats & Principle Banner */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        
-        {/* Core Philosophy Card */}
-        <div className="lg:col-span-2 bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-xl p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Phase 1 Final Deliverable</span>
-            </div>
-            <h2 className="text-base font-bold text-white mb-2">Evidence-Based Classroom Map</h2>
-            <p className="text-xs text-slate-300 leading-relaxed font-normal">
-              Visualizes foundational variation across individual children without ranking, grading, or permanent labels. 
-              Gives the teacher instant clarity on where the whole class currently stands.
-            </p>
-          </div>
-
-          <div className="pt-3 border-t border-slate-700/80 mt-3 text-[11px] text-indigo-200 italic">
-            Click any cell in the matrix below to see the specific students.
-          </div>
-        </div>
-
-        {/* Assessed Stats */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs text-center flex flex-col justify-center">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Assessment Coverage</p>
-          <p className="text-2xl font-bold text-slate-900">
-            {learningMap.assessed_count} <span className="text-sm font-normal text-slate-400">/ {learningMap.total_students}</span>
-          </p>
-          <p className="text-xs text-emerald-600 font-semibold mt-1">
-            {Math.round((learningMap.assessed_count / learningMap.total_students) * 100)}% Complete
-          </p>
-        </div>
-
-        {/* Legend Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs text-xs space-y-2">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Mastery Legend</p>
-          <div className="flex items-center gap-2 text-slate-700">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0" />
-            <span className="font-semibold text-xs">Demonstrated (≥80%)</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-700">
-            <span className="w-3 h-3 rounded-full bg-amber-400 shrink-0" />
-            <span className="font-semibold text-xs">Emerging (40-79%)</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-700">
-            <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
-            <span className="font-semibold text-xs">Not Yet Demonstrated</span>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Classroom FLN Matrix: Reading */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+      {/* Institutional Page Header */}
+      <PageHeader
+        breadcrumb="Dashboard"
+        onBreadcrumbClick={() => onNavigate('dashboard')}
+        title="Classroom Learning Map"
+        subtitle={`Distribution of demonstrated foundational skills across ${learningMap.class_name} • Grade ${learningMap.grade}`}
+        badge="Foundational Matrix"
+        actions={
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-slate-900 text-sm">Foundational Literacy Matrix</h3>
+            <ActionButton 
+              variant="secondary"
+              onClick={() => onNavigate('class_overview', { classId })}
+            >
+              Class Roster ({learningMap.total_students})
+            </ActionButton>
+            <ActionButton 
+              variant="primary"
+              onClick={() => onNavigate('assessment', { studentId: 'ST025' })}
+            >
+              Assess Next Student →
+            </ActionButton>
           </div>
-          <span className="text-xs font-semibold text-slate-500">
-            ASER & CBSE FLN Inspired
+        }
+      />
+
+      {/* Coverage & Institutional Legend Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+        
+        {/* Coverage Stat */}
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-[#666666] font-semibold">Total Assessed</p>
+          <p className="font-serif font-bold text-xl text-[#17365D]">
+            {learningMap.assessed_count} <span className="text-xs font-normal text-[#737373]">/ {learningMap.total_students}</span>
+          </p>
+          <p className="text-[10px] text-[#3B5E43] font-medium mt-0.5">
+            {Math.round((learningMap.assessed_count / learningMap.total_students) * 100)}% Classroom Baseline
+          </p>
+        </div>
+
+        {/* Legend: Demonstrated */}
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-xs bg-[#4F7658] shrink-0" />
+          <div>
+            <p className="font-semibold text-[#252525]">Demonstrated</p>
+            <p className="text-[10px] text-[#666666]">≥ 80% task competency</p>
+          </div>
+        </div>
+
+        {/* Legend: Emerging */}
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-xs bg-[#A87932] shrink-0" />
+          <div>
+            <p className="font-semibold text-[#252525]">Emerging</p>
+            <p className="text-[10px] text-[#666666]">40% – 79% developing</p>
+          </div>
+        </div>
+
+        {/* Legend: Not Yet */}
+        <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-3 flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-xs bg-[#9A4A4A] shrink-0" />
+          <div>
+            <p className="font-semibold text-[#252525]">Not Yet Demonstrated</p>
+            <p className="text-[10px] text-[#666666]">&lt; 40% task accuracy</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Reading Progression Matrix */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] overflow-hidden">
+        <div className="bg-[#F1EEE7] border-b border-[#D9D3C7] px-4 py-2.5 flex items-center justify-between">
+          <h3 className="font-serif font-bold text-sm text-[#17365D]">
+            FOUNDATIONAL LITERACY PROGRESSION MATRIX
+          </h3>
+          <span className="text-[10px] font-sans font-semibold text-[#666666] uppercase">
+            ASER & CBSE FLN Frameworks
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="institutional-table">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4 w-1/4">Foundational Skill</th>
-                <th className="py-3 px-4 text-center w-28 text-emerald-800 bg-emerald-50/30">Demonstrated</th>
-                <th className="py-3 px-4 text-center w-28 text-amber-800 bg-amber-50/30">Emerging</th>
-                <th className="py-3 px-4 text-center w-28 text-rose-800 bg-rose-50/30">Not Yet</th>
-                <th className="py-3 px-4 text-center w-28 text-slate-600 bg-slate-50/40">Not Assessed</th>
-                <th className="py-3 px-4 w-1/3">Classroom Distribution</th>
+              <tr>
+                <th className="py-2.5 px-4 text-left w-1/4">Foundational Skill</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#3B5E43] bg-[#EDF3EE]/50">Demonstrated</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#8F6627] bg-[#FAF4EB]/50">Emerging</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#873F3F] bg-[#F9EDED]/50">Not Yet</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#5F5F5F] bg-[#EFECE5]/50">Not Assessed</th>
+                <th className="py-2.5 px-4 w-1/3">Classroom Distribution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="text-xs">
               {learningMap.reading_matrix.map(skill => (
-                <tr key={skill.skill_id} className="hover:bg-slate-50/70 transition-colors">
-                  
-                  {/* Skill Name */}
-                  <td className="py-3 px-4 font-bold text-slate-900">
+                <tr key={skill.skill_id} className="hover:bg-[#F1EEE7] transition-colors">
+                  <td className="py-2.5 px-4 font-serif font-semibold text-[#17365D]">
                     {skill.skill_title}
                   </td>
-
-                  {/* Demonstrated */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Demonstrated', skill.demonstrated_count, skill.students_demonstrated, 'reading')}
-                    className="py-3 px-4 text-center font-bold text-emerald-700 bg-emerald-50/20 hover:bg-emerald-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#3B5E43] bg-[#EDF3EE]/30 hover:bg-[#DCE7DE] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-100/70 text-emerald-900">
-                      {skill.demonstrated_count}
-                    </span>
+                    {skill.demonstrated_count}
                   </td>
-
-                  {/* Emerging */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Emerging', skill.emerging_count, skill.students_emerging, 'reading')}
-                    className="py-3 px-4 text-center font-bold text-amber-700 bg-amber-50/20 hover:bg-amber-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#8F6627] bg-[#FAF4EB]/30 hover:bg-[#F3E7D3] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-amber-100/70 text-amber-900">
-                      {skill.emerging_count}
-                    </span>
+                    {skill.emerging_count}
                   </td>
-
-                  {/* Not Yet */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Not Yet Demonstrated', skill.not_yet_count, skill.students_not_yet, 'reading')}
-                    className="py-3 px-4 text-center font-bold text-rose-700 bg-rose-50/20 hover:bg-rose-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#873F3F] bg-[#F9EDED]/30 hover:bg-[#F2D7D7] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-rose-100/70 text-rose-900">
-                      {skill.not_yet_count}
-                    </span>
+                    {skill.not_yet_count}
                   </td>
-
-                  {/* Not Assessed */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Not Assessed', skill.not_assessed_count, skill.students_not_assessed, 'reading')}
-                    className="py-3 px-4 text-center font-medium text-slate-500 bg-slate-50/30 hover:bg-slate-100 cursor-pointer transition-colors"
-                    title="Click to view unassessed students"
+                    className="py-2.5 px-4 text-center text-[#5F5F5F] bg-[#EFECE5]/30 hover:bg-[#E3DFD5] cursor-pointer"
+                    title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-slate-200/60 text-slate-700">
-                      {skill.not_assessed_count}
-                    </span>
+                    {skill.not_assessed_count}
                   </td>
-
-                  {/* Distribution Bar */}
-                  <td className="py-3 px-4">
+                  <td className="py-2.5 px-4">
                     {renderDistributionBar(
                       skill.demonstrated_count,
                       skill.emerging_count,
@@ -277,7 +217,6 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
                       learningMap.total_students
                     )}
                   </td>
-
                 </tr>
               ))}
             </tbody>
@@ -285,85 +224,64 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
         </div>
       </div>
 
-      {/* Classroom FLN Matrix: Numeracy */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-indigo-600" />
-            <h3 className="font-bold text-slate-900 text-sm">Foundational Numeracy Matrix</h3>
-          </div>
-          <span className="text-xs font-semibold text-slate-500">
-            EGMA & CBSE FLN Inspired
+      {/* Numeracy Progression Matrix */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] overflow-hidden">
+        <div className="bg-[#F1EEE7] border-b border-[#D9D3C7] px-4 py-2.5 flex items-center justify-between">
+          <h3 className="font-serif font-bold text-sm text-[#17365D]">
+            FOUNDATIONAL NUMERACY PROGRESSION MATRIX
+          </h3>
+          <span className="text-[10px] font-sans font-semibold text-[#666666] uppercase">
+            EGMA & CBSE FLN Frameworks
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="institutional-table">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4 w-1/4">Foundational Skill</th>
-                <th className="py-3 px-4 text-center w-28 text-emerald-800 bg-emerald-50/30">Demonstrated</th>
-                <th className="py-3 px-4 text-center w-28 text-amber-800 bg-amber-50/30">Emerging</th>
-                <th className="py-3 px-4 text-center w-28 text-rose-800 bg-rose-50/30">Not Yet</th>
-                <th className="py-3 px-4 text-center w-28 text-slate-600 bg-slate-50/40">Not Assessed</th>
-                <th className="py-3 px-4 w-1/3">Classroom Distribution</th>
+              <tr>
+                <th className="py-2.5 px-4 text-left w-1/4">Foundational Skill</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#3B5E43] bg-[#EDF3EE]/50">Demonstrated</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#8F6627] bg-[#FAF4EB]/50">Emerging</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#873F3F] bg-[#F9EDED]/50">Not Yet</th>
+                <th className="py-2.5 px-4 text-center w-28 text-[#5F5F5F] bg-[#EFECE5]/50">Not Assessed</th>
+                <th className="py-2.5 px-4 w-1/3">Classroom Distribution</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="text-xs">
               {learningMap.numeracy_matrix.map(skill => (
-                <tr key={skill.skill_id} className="hover:bg-slate-50/70 transition-colors">
-                  
-                  {/* Skill Name */}
-                  <td className="py-3 px-4 font-bold text-slate-900">
+                <tr key={skill.skill_id} className="hover:bg-[#F1EEE7] transition-colors">
+                  <td className="py-2.5 px-4 font-serif font-semibold text-[#17365D]">
                     {skill.skill_title}
                   </td>
-
-                  {/* Demonstrated */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Demonstrated', skill.demonstrated_count, skill.students_demonstrated, 'numeracy')}
-                    className="py-3 px-4 text-center font-bold text-emerald-700 bg-emerald-50/20 hover:bg-emerald-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#3B5E43] bg-[#EDF3EE]/30 hover:bg-[#DCE7DE] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-100/70 text-emerald-900">
-                      {skill.demonstrated_count}
-                    </span>
+                    {skill.demonstrated_count}
                   </td>
-
-                  {/* Emerging */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Emerging', skill.emerging_count, skill.students_emerging, 'numeracy')}
-                    className="py-3 px-4 text-center font-bold text-amber-700 bg-amber-50/20 hover:bg-amber-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#8F6627] bg-[#FAF4EB]/30 hover:bg-[#F3E7D3] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-amber-100/70 text-amber-900">
-                      {skill.emerging_count}
-                    </span>
+                    {skill.emerging_count}
                   </td>
-
-                  {/* Not Yet */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Not Yet Demonstrated', skill.not_yet_count, skill.students_not_yet, 'numeracy')}
-                    className="py-3 px-4 text-center font-bold text-rose-700 bg-rose-50/20 hover:bg-rose-100/60 cursor-pointer transition-colors"
+                    className="py-2.5 px-4 text-center font-bold text-[#873F3F] bg-[#F9EDED]/30 hover:bg-[#F2D7D7] cursor-pointer"
                     title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-rose-100/70 text-rose-900">
-                      {skill.not_yet_count}
-                    </span>
+                    {skill.not_yet_count}
                   </td>
-
-                  {/* Not Assessed */}
                   <td 
                     onClick={() => handleCellClick(skill.skill_title, 'Not Assessed', skill.not_assessed_count, skill.students_not_assessed, 'numeracy')}
-                    className="py-3 px-4 text-center font-medium text-slate-500 bg-slate-50/30 hover:bg-slate-100 cursor-pointer transition-colors"
-                    title="Click to view unassessed students"
+                    className="py-2.5 px-4 text-center text-[#5F5F5F] bg-[#EFECE5]/30 hover:bg-[#E3DFD5] cursor-pointer"
+                    title="Click to view students"
                   >
-                    <span className="px-2.5 py-1 rounded-md bg-slate-200/60 text-slate-700">
-                      {skill.not_assessed_count}
-                    </span>
+                    {skill.not_assessed_count}
                   </td>
-
-                  {/* Distribution Bar */}
-                  <td className="py-3 px-4">
+                  <td className="py-2.5 px-4">
                     {renderDistributionBar(
                       skill.demonstrated_count,
                       skill.emerging_count,
@@ -372,7 +290,6 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
                       learningMap.total_students
                     )}
                   </td>
-
                 </tr>
               ))}
             </tbody>
@@ -380,62 +297,68 @@ export const ClassroomLearningMap: React.FC<ClassroomLearningMapProps> = ({ clas
         </div>
       </div>
 
-      {/* Classroom Insight & Phase 2 Transition Roadmap Banner */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 rounded-xl border border-blue-200 p-6 space-y-3">
-        <div className="flex items-center gap-2 text-blue-900 font-bold text-xs uppercase tracking-wider">
-          <Info className="w-4 h-4 text-blue-600" />
-          <span>Section 22 & 25: Phase 1 Completion & Future AI Connection</span>
+      {/* Classroom Pedagogical Insight & Phase 2 Transition Statement */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-5 space-y-3 text-xs text-[#525252]">
+        <div className="flex items-baseline justify-between border-b border-[#D9D3C7] pb-2">
+          <span className="font-bold text-[#17365D] uppercase tracking-wide text-[10px]">
+            Classroom Foundational Baseline Summary
+          </span>
+          <span className="text-[10px] text-[#8A2F35] font-semibold">
+            Institutional Research Metric
+          </span>
         </div>
-        
-        <p className="text-slate-800 text-sm leading-relaxed">
+        <p className="text-sm font-serif leading-relaxed text-[#252525]">
           {learningMap.summary_insight}
         </p>
 
-        <div className="pt-3 border-t border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900">
-          <span className="font-semibold italic">
-            “Now that the system understands the classroom, Phase 2 can diagnose the learning gaps and determine the next learning move.”
+        <div className="pt-2 text-[11px] font-sans text-[#666666] border-t border-[#D9D3C7] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span className="italic">
+            “Now that the platform understands the classroom baseline, Phase 2 will diagnose specific learning gaps and recommend the next instructional move.”
           </span>
-          <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-bold text-[11px] self-start sm:self-auto shrink-0 shadow-2xs">
-            Ready for Phase 2 API Consumption
+          <span className="font-semibold text-[#17365D]">
+            Phase 1 Baseline Ready
           </span>
         </div>
       </div>
 
-      {/* Interactive Modal to Inspect Students in Cell */}
+      {/* Student List Popover Modal */}
       {modalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md w-full shadow-lg space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-[#FCFBF8] rounded-[6px] border border-[#B8B0A2] p-5 max-w-md w-full shadow-md font-sans">
+            <div className="flex items-baseline justify-between pb-2 border-b border-[#D9D3C7] mb-3">
               <div>
-                <h3 className="font-bold text-slate-900 text-base">{modalData.skillTitle}</h3>
-                <p className="text-xs text-slate-500">
-                  Category: <span className="font-semibold text-slate-800">{modalData.category}</span> ({modalData.count} Students)
+                <h3 className="font-serif font-bold text-[#17365D] text-base">
+                  {modalData.skillTitle}
+                </h3>
+                <p className="text-xs text-[#666666]">
+                  Classification: <b className="text-[#252525]">{modalData.category}</b> ({modalData.count} Students)
                 </p>
               </div>
               <button
                 onClick={() => setModalData(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                className="text-[#737373] hover:text-[#252525] text-sm"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
-            <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+            <div className="max-h-56 overflow-y-auto space-y-1 pr-1 text-xs">
               {modalData.students.map((name, i) => (
-                <div key={i} className="p-2 rounded-lg bg-slate-50 text-xs font-medium text-slate-800 border border-slate-100 flex items-center justify-between">
+                <div key={i} className="py-1.5 px-2.5 bg-[#F1EEE7] border border-[#D9D3C7] rounded-[3px] flex items-center justify-between text-[#252525]">
                   <span>{name}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">#{i + 1}</span>
+                  <span className="text-[10px] text-[#737373] font-mono">#{i + 1}</span>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button
+            <div className="flex justify-end pt-3 mt-3 border-t border-[#D9D3C7]">
+              <ActionButton
+                variant="secondary"
+                size="sm"
                 onClick={() => setModalData(null)}
-                className="px-4 py-1.5 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800"
               >
-                Close
-              </button>
+                Close Record
+              </ActionButton>
             </div>
           </div>
         </div>

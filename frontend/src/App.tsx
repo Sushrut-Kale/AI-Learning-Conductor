@@ -39,7 +39,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F7F3EA] text-[#252525] flex flex-col font-sans selection:bg-[#E5D8C1]">
       <Navbar 
         activeScreen={currentScreen} 
         onNavigate={handleNavigate}
@@ -88,14 +88,23 @@ export function App() {
         )}
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>
-            <b>AI Learning Conductor</b> — Phase 1: Assess & Build the Learning Map
-          </p>
-          <p className="text-[11px] text-slate-400">
-            Evidence-First FLN Architecture • ASER & CBSE FLN Inspired • Zero Unsubstantiated AI Inference
-          </p>
+      {/* Institutional Editorial Colophon Footer */}
+      <footer className="border-t border-[#D9D3C7] bg-[#FCFBF8] py-6 text-center text-xs font-sans text-[#666666]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-left">
+            <p className="font-serif font-semibold text-[#17365D] text-sm">
+              AI Learning Conductor — Foundational Learning Assessment System
+            </p>
+            <p className="text-[11px] text-[#737373] mt-0.5">
+              Phase 1.1: Institutional Clarity & Evidence-Grounded Learner Profiles
+            </p>
+          </div>
+          <div className="text-right text-[11px] text-[#737373]">
+            <p>Classroom Deployment Prototype • Zilla Parishad Primary School</p>
+            <p className="text-[10px] text-[#8E8B82] mt-0.5">
+              Modular FLN Taxonomy • Strict Evidence Grounding • Offline-First Storage
+            </p>
+          </div>
         </div>
       </footer>
     </div>

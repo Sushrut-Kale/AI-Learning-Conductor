@@ -2,68 +2,99 @@
 
 @layer base {
   :root {
-    --bg-main: #F8FAFC;
-    --card-bg: #FFFFFF;
-    --border-color: #E2E8F0;
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #64748B;
+    --bg-paper: #F7F3EA;
+    --card-surface: #FCFBF8;
+    --section-surface: #F1EEE7;
+    --border-subtle: #D9D3C7;
+    --border-strong: #B8B0A2;
     
-    /* Educational trustworthy primary */
-    --brand-primary: #3B82F6;
-    --brand-deep: #1E3A8A;
+    --brand-navy: #17365D;
+    --brand-maroon: #8A2F35;
     
-    /* Evidence status tokens */
-    --status-demonstrated: #059669;
-    --status-demonstrated-bg: #ECFDF5;
-    --status-demonstrated-border: #A7F3D0;
+    --text-primary: #252525;
+    --text-secondary: #525252;
+    --text-muted: #666666;
     
-    --status-emerging: #D97706;
-    --status-emerging-bg: #FFFBEB;
-    --status-emerging-border: #FDE68A;
+    /* Institutional Evidence Status */
+    --status-demonstrated: #4F7658;
+    --status-demonstrated-bg: #EDF3EE;
+    --status-demonstrated-border: #C6D8CA;
     
-    --status-notyet: #DC2626;
-    --status-notyet-bg: #FEF2F2;
-    --status-notyet-border: #FECACA;
+    --status-emerging: #A87932;
+    --status-emerging-bg: #FAF4EB;
+    --status-emerging-border: #E5D8C1;
     
-    --status-unassessed: #64748B;
-    --status-unassessed-bg: #F1F5F9;
-    --status-unassessed-border: #CBD5E1;
+    --status-notyet: #9A4A4A;
+    --status-notyet-bg: #F9EDED;
+    --status-notyet-border: #DFC1C1;
+    
+    --status-unassessed: #737373;
+    --status-unassessed-bg: #EFECE5;
+    --status-unassessed-border: #D5CFC3;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-paper);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Source Serif 4', 'Noto Serif', Georgia, 'Times New Roman', serif;
   }
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
+/* Institutional Editorial Elements */
+.editorial-card {
+  background-color: #FCFBF8;
+  border: 1px solid #D9D3C7;
+  border-radius: 6px;
 }
 
-/* Custom scrollbar for clean data view */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+.editorial-callout {
+  background-color: #F1EEE7;
+  border-left: 3px solid #8A2F35;
+  border-top: 1px solid #D9D3C7;
+  border-right: 1px solid #D9D3C7;
+  border-bottom: 1px solid #D9D3C7;
   border-radius: 4px;
 }
+
+.institutional-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.institutional-table th {
+  background-color: #F1EEE7;
+  border-bottom: 1px solid #B8B0A2;
+  color: #252525;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.institutional-table td {
+  border-bottom: 1px solid #E5E0D6;
+}
+
+/* Subtle scrollbars for institutional tables */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #F1EEE7;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9D3C7;
+  border-radius: 3px;
+}
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* Pulse animation for active voice/recording */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.03); }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 1.8s infinite ease-in-out;
+  background: #B8B0A2;
 }

@@ -1,20 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ArrowLeft, 
-  Check, 
-  X, 
-  Mic, 
-  MicOff, 
-  Save, 
-  Sparkles, 
-  ChevronRight, 
-  ChevronLeft, 
-  MessageSquare, 
-  CheckCircle2, 
-  HelpCircle,
-  Volume2
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { api, Assessment, AssessmentItem } from '../services/api';
+import { ActionButton } from './common/InstitutionalUI';
 
 interface AssessmentInterfaceProps {
   studentId: string;
@@ -23,11 +9,9 @@ interface AssessmentInterfaceProps {
 
 export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studentId, onNavigate }) => {
   const [student, setStudent] = useState<any>(null);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [allItems, setAllItems] = useState<AssessmentItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Responses dictionary: question_id -> { student_response, correct, teacher_observation }
   const [recordedResponses, setRecordedResponses] = useState<Record<string, {
     student_response: string;
     correct: boolean;
@@ -40,26 +24,25 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Quick observation suggestion tags
+  // Institutional quick observations
   const quickObservationTags = [
-    "Reads slowly",
-    "Hesitated on unfamiliar word",
-    "Subtracted smaller from larger digit",
-    "Used fingers for counting",
-    "Self-corrected after hesitation",
-    "Fluent and confident",
+    "Used fingers",
+    "Needed prompting",
+    "Worked independently",
     "Struggled with borrowing",
-    "Sounded out letter-by-letter"
+    "Reads slowly",
+    "Hesitated at unfamiliar word",
+    "Sounded out phonemes",
+    "Self-corrected"
   ];
 
   useEffect(() => {
     loadAssessmentSession();
   }, [studentId]);
 
-  // Keyboard shortcuts listener
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // If typing in input, ignore number hotkeys
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
@@ -84,19 +67,14 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
       setStudent(studentData.student);
 
       const asms = await api.getAssessments();
-      setAssessments(asms);
-
-      // Flatten reading items then numeracy items
       const combinedItems: AssessmentItem[] = [];
       asms.forEach(a => {
         if (a.items && a.items.length > 0) {
           combinedItems.push(...a.items);
         }
       });
-
       setAllItems(combinedItems);
 
-      // Preload already recorded responses if student was in_progress
       if (studentData.total_responses > 0) {
         const evidenceData = await api.getEvidence(studentId);
         const map: Record<string, any> = {};
@@ -145,11 +123,10 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
       }
     }));
 
-    // Auto-advance to next item if not at end
     if (currentIndex < allItems.length - 1) {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
-      }, 150);
+      }, 100);
     }
   };
 
@@ -163,12 +140,11 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
 
   const toggleVoiceRecording = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      // Simulated voice input for browsers without Web Speech API
       setIsRecordingVoice(true);
       setTimeout(() => {
-        setCurrentObservation(prev => prev ? `${prev}; Student recognizes words but reads slowly` : "Student recognizes words but reads slowly");
+        setCurrentObservation(prev => prev ? `${prev}; Needed prompting on unfamiliar term` : "Needed prompting on unfamiliar term");
         setIsRecordingVoice(false);
-      }, 1500);
+      }, 1200);
       return;
     }
 
@@ -227,7 +203,6 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
     });
 
     try {
-      // Save single responses
       for (const r of payloadResponses) {
         await fetch('/api/responses', {
           method: 'POST',
@@ -236,7 +211,7 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
         });
       }
     } catch (e) {
-      console.warn('Saved locally');
+      console.warn('Saved offline in local storage');
     }
   };
 
@@ -275,10 +250,9 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
         observations: observationsList
       });
 
-      // Navigate directly to Learning Fingerprint!
       onNavigate('fingerprint', { studentId });
     } catch (e) {
-      alert('Error finalizing assessment session. Preserving local responses.');
+      alert('Error finalizing assessment session. Retaining offline evidence.');
     } finally {
       setIsSubmitting(false);
     }
@@ -286,210 +260,165 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
 
   if (loading || !currentItem) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Loading assessment battery...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh] text-xs font-sans text-[#666666]">
+        Loading assessment instrument...
       </div>
     );
   }
 
   const answeredCount = Object.keys(recordedResponses).length;
-  const progressPercent = Math.round((answeredCount / allItems.length) * 100);
   const currentRecorded = recordedResponses[currentItem.id];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-6 space-y-5 font-sans">
       
-      {/* Top Bar: Student Header & Session Controls */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSaveAndExit}
-            className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Save and exit"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm">{student?.name || 'Student'}</span>
-              <span className="text-xs text-slate-500 font-mono">#{student?.roll_number}</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                Grade {student?.grade || 3} • {student?.language || 'Marathi'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Module: <span className="font-semibold text-slate-700 uppercase">{currentItem.domain}</span> — {currentItem.skill_title}
-            </p>
-          </div>
+      {/* Institutional Session Context (Section 12) */}
+      <div className="border-b border-[#D9D3C7] pb-3 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#8A2F35]">
+            Grade 3 — Section A
+          </p>
+          <h1 className="font-serif font-bold text-xl text-[#17365D]">
+            Student: {student?.name || 'Arjun Nalawade'}
+          </h1>
+          <p className="text-xs text-[#666666]">
+            Assessment: Foundational {currentItem.domain === 'reading' ? 'Literacy' : 'Numeracy'} ({currentItem.skill_title})
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSaveAndExit}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Save & Exit</span>
-          </button>
-          <button
+          <ActionButton variant="secondary" size="sm" onClick={handleSaveAndExit}>
+            Save & Exit
+          </ActionButton>
+          <ActionButton 
+            variant="maroon" 
+            size="sm" 
             onClick={handleFinishAssessment}
             disabled={isSubmitting || answeredCount === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-xs disabled:opacity-50"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Generate Fingerprint</span>
-          </button>
+            {isSubmitting ? 'Structuring...' : 'Complete & Structure Fingerprint'}
+          </ActionButton>
         </div>
       </div>
 
-      {/* Progress Indicator */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between items-center text-xs text-slate-500">
-          <span className="font-semibold text-slate-700">
-            Task {currentIndex + 1} of {allItems.length}
-          </span>
-          <span>{answeredCount} of {allItems.length} Recorded ({progressPercent}%)</span>
-        </div>
-        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-blue-600 transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / allItems.length) * 100}%` }}
-          />
-        </div>
+      {/* Progress Strip */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] px-3.5 py-2 flex items-center justify-between text-xs">
+        <span className="font-semibold text-[#17365D]">
+          TASK {currentIndex + 1} OF {allItems.length}
+        </span>
+        <span className="text-[#666666]">
+          {answeredCount} of {allItems.length} tasks recorded
+        </span>
       </div>
 
-      {/* Main Stimulus Card */}
-      <div className="bg-white rounded-2xl border-2 border-slate-200 p-6 sm:p-10 shadow-xs text-center relative overflow-hidden">
+      {/* Stimulus & Instructions Panel */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-6 text-center space-y-4">
         
-        {/* Domain Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 mb-6">
-          <span className="capitalize">{currentItem.domain}</span>
-          <span>•</span>
-          <span>{currentItem.skill_title}</span>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#666666]">
+          {currentItem.skill_title}
         </div>
 
-        {/* Big Stimulus Text */}
-        <div className="min-h-[140px] flex items-center justify-center p-4">
-          <div className="text-3xl sm:text-5xl font-bold text-slate-900 tracking-wide font-sans leading-relaxed select-none">
+        {/* Big Stimulus Display */}
+        <div className="py-6 min-h-[120px] flex items-center justify-center">
+          <div className="font-serif text-3xl sm:text-5xl font-bold text-[#17365D] tracking-wide leading-relaxed">
             {currentItem.question_stimulus}
           </div>
         </div>
 
-        {/* Expected Response hint */}
-        <div className="mt-2 text-xs text-slate-400 font-mono">
-          Target / Expected: <span className="font-semibold text-slate-600">{currentItem.expected_response}</span>
-        </div>
-
-        {/* Teacher Administration Prompt */}
-        <div className="mt-6 p-3 rounded-lg bg-blue-50/60 border border-blue-100 text-xs text-blue-900 max-w-lg mx-auto flex items-start gap-2 text-left">
-          <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold">Teacher Prompt: </span>
-            {currentItem.instructions_for_teacher}
-          </div>
+        {/* Teacher Instruction Callout */}
+        <div className="bg-[#F1EEE7] border-t border-[#D9D3C7] -mx-6 -mb-6 p-3.5 text-left text-xs text-[#525252]">
+          <span className="font-bold text-[#17365D] uppercase tracking-wide text-[10px] block mb-0.5">
+            Teacher Instruction:
+          </span>
+          {currentItem.instructions_for_teacher}
         </div>
 
       </div>
 
-      {/* Student Response & Marking Controls */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
+      {/* Student Response & Evaluation Panel (Section 12) */}
+      <div className="bg-[#FCFBF8] border border-[#D9D3C7] rounded-[4px] p-5 space-y-4">
         
-        {/* Student Response Display / Input */}
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="w-full sm:w-1/3">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Student Response
-            </label>
+        {/* Response Row */}
+        <div>
+          <label className="block text-xs font-semibold text-[#252525] mb-1">
+            Student Response:
+          </label>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <input
               type="text"
               placeholder={`e.g. ${currentItem.expected_response}`}
               value={currentResponseInput}
               onChange={e => setCurrentResponseInput(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full sm:w-1/2 px-3 py-2 text-sm border border-[#D9D3C7] rounded-[4px] bg-[#FCFBF8] text-[#252525] focus:outline-none focus:border-[#17365D] font-mono"
             />
-          </div>
 
-          {/* Large Marking Buttons */}
-          <div className="w-full sm:w-2/3 flex items-center gap-3 pt-4 sm:pt-0">
-            {/* Correct Button */}
-            <button
-              onClick={() => handleMark(true)}
-              className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs ${
-                currentRecorded?.correct === true
-                  ? 'bg-emerald-600 text-white border-emerald-700 ring-2 ring-emerald-300'
-                  : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
-              }`}
-            >
-              <Check className="w-5 h-5 stroke-[2.5]" />
-              <span>✓ Correct</span>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-black/10 rounded font-mono font-normal">
-                Key 1
-              </kbd>
-            </button>
+            {/* Evaluation Buttons */}
+            <div className="w-full sm:w-1/2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleMark(true)}
+                className={`flex-1 py-2 px-3 rounded-[4px] border text-xs font-bold transition-colors ${
+                  currentRecorded?.correct === true
+                    ? 'bg-[#4F7658] text-[#FCFBF8] border-[#4F7658]'
+                    : 'bg-[#EDF3EE] text-[#3B5E43] border-[#C6D8CA] hover:bg-[#DCE7DE]'
+                }`}
+              >
+                [ ✓ Correct ] <span className="text-[10px] font-normal opacity-75">(Key 1)</span>
+              </button>
 
-            {/* Incorrect Button */}
-            <button
-              onClick={() => handleMark(false)}
-              className={`flex-1 py-3 px-4 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs ${
-                currentRecorded?.correct === false
-                  ? 'bg-rose-600 text-white border-rose-700 ring-2 ring-rose-300'
-                  : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100 hover:border-rose-400'
-              }`}
-            >
-              <X className="w-5 h-5 stroke-[2.5]" />
-              <span>✗ Incorrect</span>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-black/10 rounded font-mono font-normal">
-                Key 2
-              </kbd>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleMark(false)}
+                className={`flex-1 py-2 px-3 rounded-[4px] border text-xs font-bold transition-colors ${
+                  currentRecorded?.correct === false
+                    ? 'bg-[#9A4A4A] text-[#FCFBF8] border-[#9A4A4A]'
+                    : 'bg-[#F9EDED] text-[#873F3F] border-[#DFC1C1] hover:bg-[#F2D7D7]'
+                }`}
+              >
+                [ ✕ Incorrect ] <span className="text-[10px] font-normal opacity-75">(Key 2)</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Teacher Observation Section (Section 9) */}
-        <div className="pt-4 border-t border-slate-100 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
-              <span>Teacher Observation (Optional evidence note)</span>
+        {/* Teacher Observation Row */}
+        <div className="pt-3 border-t border-[#D9D3C7]">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold text-[#252525]">
+              Teacher Observation (Qualitative task evidence):
             </label>
-
-            {/* Voice Input Button */}
             <button
               type="button"
               onClick={toggleVoiceRecording}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all ${
+              className={`text-[11px] font-sans px-2 py-0.5 rounded-[4px] border transition-colors ${
                 isRecordingVoice
-                  ? 'bg-rose-100 text-rose-700 border border-rose-300 animate-pulse'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#F9EDED] text-[#873F3F] border-[#DFC1C1]'
+                  : 'bg-[#F1EEE7] text-[#525252] border-[#D9D3C7] hover:bg-[#E5E0D6]'
               }`}
             >
-              {isRecordingVoice ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-              <span>{isRecordingVoice ? 'Listening...' : 'Voice Dictate'}</span>
+              {isRecordingVoice ? '● Recording Voice...' : 'Voice Dictate'}
             </button>
           </div>
 
           <input
             type="text"
-            placeholder="e.g. Student attempted subtraction but struggled with borrowing; reads slowly"
+            placeholder="Add specific observational evidence..."
             value={currentObservation}
             onChange={e => setCurrentObservation(e.target.value)}
-            className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-1.5 text-xs border border-[#D9D3C7] rounded-[4px] bg-[#FCFBF8] focus:outline-none focus:border-[#17365D]"
           />
 
-          {/* Quick Tags for Instant Logging */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mr-1">
-              Quick Tags:
+          {/* Quick Observations Tags (Section 12) */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#666666] mr-1">
+              Quick observations:
             </span>
             {quickObservationTags.map(tag => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => handleTagClick(tag)}
-                className="px-2 py-1 text-[11px] rounded bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors border border-slate-200/60"
+                className="px-2 py-0.5 text-[11px] rounded-[3px] bg-[#F1EEE7] text-[#525252] border border-[#D9D3C7] hover:bg-[#E5E0D6] transition-colors"
               >
                 + {tag}
               </button>
@@ -497,29 +426,31 @@ export const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({ studen
           </div>
         </div>
 
-        {/* Prev / Next Navigation Controls */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-          <button
-            onClick={goToPrev}
-            disabled={currentIndex === 0}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <ChevronLeft className="w-4 h-4" /> Previous
-          </button>
+      </div>
 
-          <span className="text-slate-400 font-mono">
-            {currentIndex + 1} / {allItems.length}
-          </span>
+      {/* Navigation Footer */}
+      <div className="flex items-center justify-between text-xs pt-1">
+        <ActionButton 
+          variant="secondary" 
+          size="sm" 
+          onClick={goToPrev}
+          disabled={currentIndex === 0}
+        >
+          ← Previous Task
+        </ActionButton>
 
-          <button
-            onClick={goToNext}
-            disabled={currentIndex === allItems.length - 1}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <span className="text-[#666666] font-mono">
+          Task {currentIndex + 1} / {allItems.length}
+        </span>
 
+        <ActionButton 
+          variant="secondary" 
+          size="sm" 
+          onClick={goToNext}
+          disabled={currentIndex === allItems.length - 1}
+        >
+          Next Task →
+        </ActionButton>
       </div>
 
     </div>
