@@ -492,5 +492,107 @@ class TeachAndAdaptOverview(BaseModel):
     active_interventions: List[InterventionSession] = []
     adaptation_summary: ClassroomAdaptationSummary
 
+# ============================================================
+# PHASE 5: SCHOOL INTELLIGENCE & EARLY-SUPPORT SIGNALS MODELS
+# ============================================================
+
+class SchoolSignal(BaseModel):
+    id: str
+    school_id: str
+    type: Literal[
+        "REPEATED_LEARNING_PATTERN",
+        "PERSISTENT_DIFFICULTY",
+        "EVIDENCE_COVERAGE_GAP",
+        "POSITIVE_RESPONSE_PATTERN"
+    ]
+    title: str
+    focus_skill: str
+    affected_classes: List[str] = []
+    affected_students_count: int = 0
+    evidence_coverage_percentage: float = 0.0
+    confidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+    status: Literal["open", "under_review", "action_assigned", "resolved"] = "open"
+    why_summary: str
+    suggested_action: str
+    first_observed: str
+    last_updated: str
+
+class SignalEvidence(BaseModel):
+    id: str
+    signal_id: str
+    signal_title: str
+    signal_type: str
+    focus_skill: str
+    classes_breakdown: List[Dict[str, Any]] = []
+    overall_skill_status: Dict[str, int] = {}
+    evidence_sources: Dict[str, str] = {}
+    deterministic_calculation: str
+    traceable_items: List[Dict[str, Any]] = []
+
+class SchoolReview(BaseModel):
+    id: str
+    signal_id: str
+    signal_title: str
+    reviewer_id: str = "PRIN_001"
+    action: Literal["reviewed", "acknowledged", "assigned_follow_up", "request_more_evidence"]
+    assigned_to: Optional[str] = None
+    review_question: Optional[str] = None
+    due_date: Optional[str] = None
+    notes: Optional[str] = None
+    status: Literal["open", "in_progress", "completed"] = "open"
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+class InstructionalPattern(BaseModel):
+    id: str
+    title: str
+    focus_domain: str
+    description: str
+    session_count: int
+    progress_count: int
+    partial_count: int
+    unresolved_count: int
+    sessions_detail: List[Dict[str, Any]] = []
+
+class EvidenceBrief(BaseModel):
+    id: str
+    school_id: str
+    school_name: str
+    reporting_period: str
+    evidence_coverage_summary: str
+    repeated_patterns_summary: str
+    intervention_response_summary: str
+    unresolved_areas_summary: str
+    evidence_gaps_summary: str
+    suggested_review: str
+    source_snapshot: Dict[str, Any] = {}
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+class SchoolEvidenceTimelineEntry(BaseModel):
+    date: str
+    timestamp: str
+    event: str
+    phase: str
+    detail: str
+
+class SchoolIntelligenceOverview(BaseModel):
+    school_id: str
+    school_name: str
+    academic_session: str
+    last_updated: str
+    total_students: int
+    assessed_students: int
+    coverage_percentage: float
+    active_paths_count: int
+    open_diagnostic_patterns_count: int
+    intervention_responses_count: int
+    signals: List[SchoolSignal] = []
+    classrooms_coverage: List[Dict[str, Any]] = []
+    skills_landscape: Dict[str, List[Dict[str, Any]]] = {}
+    evidence_trends: List[Dict[str, Any]] = []
+    intervention_landscape: Dict[str, Any] = {}
+    positive_patterns: List[InstructionalPattern] = []
+    timeline: List[SchoolEvidenceTimelineEntry] = []
+
+
 
 

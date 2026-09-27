@@ -70,6 +70,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigate }
             >
               Teach & Adapt (Phase 4)
             </ActionButton>
+            <ActionButton 
+              variant="secondary" 
+              onClick={() => onNavigate('school_intelligence')}
+            >
+              School Intelligence (Phase 5)
+            </ActionButton>
           </div>
         }
       />

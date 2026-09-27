@@ -185,6 +185,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activeScreen, onNavigate, onRefr
               <span className="font-semibold">Teach & Adapt</span>
               <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 4</span>
             </button>
+            <button
+              onClick={() => onNavigate('school_intelligence')}
+              className={`px-3 py-1.5 text-xs font-sans font-medium transition-colors rounded-[4px] flex items-center gap-1.5 ${
+                activeScreen === 'school_intelligence'
+                  ? 'bg-[#17365D] text-[#FCFBF8]'
+                  : 'text-[#17365D] bg-[#FAF4EB] border border-[#E5D8C1] hover:bg-[#F3E7D3]'
+              }`}
+            >
+              <span className="font-semibold">School Intelligence</span>
+              <span className="text-[10px] px-1 py-0.2 bg-black/10 rounded-xs">Phase 5</span>
+            </button>
           </nav>
 
           {/* Teacher Status & Connectivity Indicator */}

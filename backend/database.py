@@ -27,16 +27,25 @@ from models import (
     StudentTrajectoryEntry,
     StudentLearningTrajectory,
     ClassroomAdaptationSummary,
-    TeachAndAdaptOverview
+    TeachAndAdaptOverview,
+    SchoolSignal,
+    SignalEvidence,
+    SchoolReview,
+    InstructionalPattern,
+    EvidenceBrief,
+    SchoolEvidenceTimelineEntry,
+    SchoolIntelligenceOverview
 )
 from assessment_content import get_foundational_assessments, SKILL_DEFINITIONS
 from evidence_engine import compute_skill_evidence, determine_confidence_level, generate_grounded_narrative, structure_teacher_observation
 from diagnostic_engine import analyze_student_learning_gaps, build_classroom_diagnostic_overview
 from orchestration_engine import orchestration_engine
 from adaptation_engine import adaptation_engine
+from school_intelligence_engine import school_intelligence_engine
 
 class DataStore:
     def __init__(self):
+        self.school_reviews: Dict[str, SchoolReview] = {}
         self.teacher: Teacher = Teacher(
             id="TCH001",
             name="Sunita Patil",
@@ -841,6 +850,72 @@ class DataStore:
             "duration_minutes": new_plan.duration_minutes,
             "message": "Next classroom orchestration successfully generated incorporating Phase 4 intervention responses."
         }
+
+    # ============================================================
+    # PHASE 5: SCHOOL INTELLIGENCE & EARLY-SUPPORT SIGNALS
+    # ============================================================
+
+    def get_school_intelligence_overview(self, school_id: str = "SCH_ZP_SHIRUR") -> SchoolIntelligenceOverview:
+        reviews_list = list(self.school_reviews.values())
+        return school_intelligence_engine.build_school_overview(school_id=school_id, reviews=reviews_list)
+
+    def get_school_signals(self, school_id: str = "SCH_ZP_SHIRUR") -> List[SchoolSignal]:
+        reviews_list = list(self.school_reviews.values())
+        overview = school_intelligence_engine.build_school_overview(school_id=school_id, reviews=reviews_list)
+        return overview.signals
+
+    def get_signal_detail(self, signal_id: str) -> Optional[SchoolSignal]:
+        signals = self.get_school_signals()
+        for s in signals:
+            if s.id == signal_id:
+                return s
+        return None
+
+    def get_signal_evidence(self, signal_id: str) -> SignalEvidence:
+        return school_intelligence_engine.get_signal_evidence_detail(signal_id)
+
+    def create_school_review(
+        self,
+        signal_id: str,
+        action: str,
+        reviewer_id: str = "PRIN_001",
+        assigned_to: Optional[str] = None,
+        review_question: Optional[str] = None,
+        due_date: Optional[str] = None,
+        notes: Optional[str] = None
+    ) -> SchoolReview:
+        review = school_intelligence_engine.record_school_review(
+            signal_id=signal_id,
+            action=action,
+            reviewer_id=reviewer_id,
+            assigned_to=assigned_to,
+            review_question=review_question,
+            due_date=due_date,
+            notes=notes
+        )
+        self.school_reviews[signal_id] = review
+        return review
+
+    def generate_school_evidence_brief(self, school_id: str = "SCH_ZP_SHIRUR") -> EvidenceBrief:
+        return school_intelligence_engine.generate_school_evidence_brief(school_id)
+
+    def get_school_landscape(self, school_id: str = "SCH_ZP_SHIRUR") -> Dict[str, Any]:
+        overview = self.get_school_intelligence_overview(school_id)
+        return {
+            "skills_landscape": overview.skills_landscape,
+            "evidence_trends": overview.evidence_trends,
+            "total_students": overview.total_students,
+            "assessed_students": overview.assessed_students,
+            "coverage_percentage": overview.coverage_percentage
+        }
+
+    def get_school_intervention_patterns(self, school_id: str = "SCH_ZP_SHIRUR") -> List[InstructionalPattern]:
+        overview = self.get_school_intelligence_overview(school_id)
+        return overview.positive_patterns
+
+    def get_school_timeline(self, school_id: str = "SCH_ZP_SHIRUR") -> List[SchoolEvidenceTimelineEntry]:
+        overview = self.get_school_intelligence_overview(school_id)
+        return overview.timeline
 
 db = DataStore()
 

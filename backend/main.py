@@ -32,7 +32,14 @@ from models import (
     TeacherObservationRecord,
     MultimodalEvidenceRecord,
     StudentLearningTrajectory,
-    TeachAndAdaptOverview
+    TeachAndAdaptOverview,
+    SchoolSignal,
+    SignalEvidence,
+    SchoolReview,
+    InstructionalPattern,
+    EvidenceBrief,
+    SchoolEvidenceTimelineEntry,
+    SchoolIntelligenceOverview
 )
 from database import db
 from ai_service import generate_learning_fingerprint_ai, GEMINI_API_KEY
@@ -798,6 +805,100 @@ async def prepare_next_lesson(class_id: str):
     Synthesizes updated intervention outcomes into a fresh classroom orchestration for the next lesson.
     """
     return db.prepare_next_lesson_handoff(class_id)
+
+# ============================================================
+# PHASE 5: SCHOOL INTELLIGENCE & EARLY-SUPPORT SIGNALS ENDPOINTS
+# ============================================================
+
+@app.get("/api/school-intelligence/{school_id}", response_model=SchoolIntelligenceOverview)
+async def get_school_intelligence_overview(school_id: str):
+    """
+    Aggregated School Intelligence Overview (Section 3):
+    Coverage metrics, early-support signals, classroom landscape, intervention patterns, and timeline.
+    """
+    return db.get_school_intelligence_overview(school_id)
+
+@app.get("/api/school-intelligence/{school_id}/signals", response_model=List[SchoolSignal])
+async def get_school_signals(school_id: str):
+    """
+    Early-Support Signals (Section 3, 6, 7):
+    Returns 4-6 deterministic early-support signals with confidence ratings.
+    """
+    return db.get_school_signals(school_id)
+
+@app.get("/api/school-intelligence/signals/{signal_id}", response_model=SchoolSignal)
+async def get_signal_detail(signal_id: str):
+    """
+    Single Signal Detail.
+    """
+    signal = db.get_signal_detail(signal_id)
+    if not signal:
+        raise HTTPException(status_code=404, detail="Signal not found")
+    return signal
+
+@app.get("/api/school-intelligence/signals/{signal_id}/evidence", response_model=SignalEvidence)
+async def get_signal_evidence(signal_id: str):
+    """
+    Traceable Signal Evidence Explorer (Section 10 & 21):
+    Provides cross-phase evidence sources (Phase 1 Assess, Phase 2 Diagnose, Phase 3 Path, Phase 4 Intervention).
+    """
+    return db.get_signal_evidence(signal_id)
+
+@app.post("/api/school-intelligence/signals/{signal_id}/review", response_model=SchoolReview)
+async def create_school_review(signal_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    School Leader Review Action Workflow (Section 22 & 23):
+    Records review, acknowledgement, or follow-up assignment without altering evidence data.
+    """
+    action = payload.get("action", "reviewed")
+    reviewer_id = payload.get("reviewer_id", "PRIN_001")
+    assigned_to = payload.get("assigned_to", "Grade 3–4 Teaching Team")
+    review_question = payload.get("review_question", "Review the evidence underlying repeated difficulty with two-digit subtraction.")
+    due_date = payload.get("due_date", "30 September 2026")
+    notes = payload.get("notes")
+
+    return db.create_school_review(
+        signal_id=signal_id,
+        action=action,
+        reviewer_id=reviewer_id,
+        assigned_to=assigned_to,
+        review_question=review_question,
+        due_date=due_date,
+        notes=notes
+    )
+
+@app.get("/api/school-intelligence/{school_id}/landscape")
+async def get_school_landscape(school_id: str):
+    """
+    School Learning Landscape & Distribution Bars (Section 13):
+    Returns skill status distributions for foundational literacy and numeracy across the school.
+    """
+    return db.get_school_landscape(school_id)
+
+@app.get("/api/school-intelligence/{school_id}/intervention-patterns", response_model=List[InstructionalPattern])
+async def get_school_intervention_patterns(school_id: str):
+    """
+    Positive Instructional Pattern Library (Section 16):
+    Recurring pedagogical sequences associated with observed post-intervention progress.
+    """
+    return db.get_school_intervention_patterns(school_id)
+
+@app.post("/api/school-intelligence/{school_id}/generate-brief", response_model=EvidenceBrief)
+async def generate_school_evidence_brief(school_id: str):
+    """
+    AI-Structured Institutional School Evidence Brief (Section 19 & 20):
+    Synthesizes school-level evidence trends without hallucinations or ranking.
+    """
+    return db.generate_school_evidence_brief(school_id)
+
+@app.get("/api/school-intelligence/{school_id}/timeline", response_model=List[SchoolEvidenceTimelineEntry])
+async def get_school_timeline(school_id: str):
+    """
+    School Evidence Timeline (Section 24):
+    Chronological record of school assessment and intervention events.
+    """
+    return db.get_school_timeline(school_id)
+
 
 
 

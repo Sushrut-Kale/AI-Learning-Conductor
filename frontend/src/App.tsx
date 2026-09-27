@@ -14,6 +14,7 @@ import { LessonReviewModal } from './components/LessonReviewModal';
 import { TeachAndAdaptDashboard } from './components/TeachAndAdaptDashboard';
 import { LiveTeachingView } from './components/LiveTeachingView';
 import { InterventionReviewView } from './components/InterventionReviewView';
+import { SchoolIntelligenceDashboard } from './components/SchoolIntelligenceDashboard';
 import { api, ClassroomPlan } from './services/api';
 
 function LiveClassroomScreen({
@@ -199,6 +200,12 @@ export function App() {
           <InterventionReviewView
             sessionId={screenParams.sessionId || 'INT_ST001_SUB'}
             studentId={screenParams.studentId || 'ST001'}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {currentScreen === 'school_intelligence' && (
+          <SchoolIntelligenceDashboard
             onNavigate={handleNavigate}
           />
         )}

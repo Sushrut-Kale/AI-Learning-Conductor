@@ -691,6 +691,79 @@ class ApiService {
     });
     return await res.json();
   }
+
+  // Phase 5: School Intelligence & Early-Support Signals
+  async getSchoolIntelligenceOverview(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<SchoolIntelligenceOverview> {
+    try {
+      const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}`);
+      if (!res.ok) throw new Error('School Intelligence fetch failed');
+      const data = await res.json();
+      localStorage.setItem(`SCHOOL_INTELLIGENCE_${schoolId}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`SCHOOL_INTELLIGENCE_${schoolId}`);
+      if (cached) return JSON.parse(cached);
+      throw e;
+    }
+  }
+
+  async getSchoolSignals(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<SchoolSignal[]> {
+    const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}/signals`);
+    return await res.json();
+  }
+
+  async getSignalEvidence(signalId: string): Promise<SignalEvidence> {
+    const res = await fetch(`${API_BASE}/school-intelligence/signals/${signalId}/evidence`);
+    return await res.json();
+  }
+
+  async recordSchoolReview(
+    signalId: string,
+    action: string,
+    reviewerId: string = 'PRIN_001',
+    assignedTo?: string,
+    reviewQuestion?: string,
+    dueDate?: string,
+    notes?: string
+  ): Promise<SchoolReview> {
+    const res = await fetch(`${API_BASE}/school-intelligence/signals/${signalId}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        reviewer_id: reviewerId,
+        assigned_to: assignedTo,
+        review_question: reviewQuestion,
+        due_date: dueDate,
+        notes
+      })
+    });
+    return await res.json();
+  }
+
+  async getSchoolLandscape(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<any> {
+    const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}/landscape`);
+    return await res.json();
+  }
+
+  async getSchoolInterventionPatterns(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<InstructionalPattern[]> {
+    const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}/intervention-patterns`);
+    return await res.json();
+  }
+
+  async generateSchoolEvidenceBrief(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<EvidenceBrief> {
+    const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}/generate-brief`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    return await res.json();
+  }
+
+  async getSchoolTimeline(schoolId: string = 'SCH_ZP_SHIRUR'): Promise<SchoolEvidenceTimelineEntry[]> {
+    const res = await fetch(`${API_BASE}/school-intelligence/${schoolId}/timeline`);
+    return await res.json();
+  }
 }
 
 // Phase 2 Type Definitions
@@ -1096,6 +1169,175 @@ export interface TeachAndAdaptOverview {
   }[];
   active_interventions: InterventionSession[];
   adaptation_summary: ClassroomAdaptationSummary;
+}
+
+// Phase 5: School Intelligence & Early-Support Signals Type Definitions
+export interface SchoolSignal {
+  id: string;
+  school_id: string;
+  type: 'REPEATED_LEARNING_PATTERN' | 'PERSISTENT_DIFFICULTY' | 'EVIDENCE_COVERAGE_GAP' | 'POSITIVE_RESPONSE_PATTERN';
+  title: string;
+  focus_skill: string;
+  affected_classes: string[];
+  affected_students_count: number;
+  evidence_coverage_percentage: number;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'open' | 'under_review' | 'action_assigned' | 'resolved';
+  why_summary: string;
+  suggested_action: string;
+  first_observed: string;
+  last_updated: string;
+}
+
+export interface SignalEvidence {
+  id: string;
+  signal_id: string;
+  signal_title: string;
+  signal_type: string;
+  focus_skill: string;
+  classes_breakdown: {
+    class_id: string;
+    class_name: string;
+    student_count: number;
+    status_distribution: {
+      demonstrated: number;
+      emerging: number;
+      not_yet: number;
+      not_assessed: number;
+    };
+    sample_students: string[];
+  }[];
+  overall_skill_status: {
+    demonstrated: number;
+    emerging: number;
+    not_yet: number;
+    not_assessed: number;
+  };
+  evidence_sources: Record<string, string>;
+  deterministic_calculation: string;
+  traceable_items: {
+    source_id: string;
+    type: string;
+    detail: string;
+  }[];
+}
+
+export interface SchoolReview {
+  id: string;
+  signal_id: string;
+  signal_title: string;
+  reviewer_id: string;
+  action: 'reviewed' | 'acknowledged' | 'assigned_follow_up' | 'request_more_evidence';
+  assigned_to?: string;
+  review_question?: string;
+  due_date?: string;
+  notes?: string;
+  status: 'open' | 'in_progress' | 'completed';
+  created_at: string;
+}
+
+export interface InstructionalPattern {
+  id: string;
+  title: string;
+  focus_domain: string;
+  description: string;
+  session_count: number;
+  progress_count: number;
+  partial_count: number;
+  unresolved_count: number;
+  sessions_detail: {
+    session_id: string;
+    student_name: string;
+    class: string;
+    outcome: string;
+  }[];
+}
+
+export interface EvidenceBrief {
+  id: string;
+  school_id: string;
+  school_name: string;
+  reporting_period: string;
+  evidence_coverage_summary: string;
+  repeated_patterns_summary: string;
+  intervention_response_summary: string;
+  unresolved_areas_summary: string;
+  evidence_gaps_summary: string;
+  suggested_review: string;
+  source_snapshot: Record<string, any>;
+  created_at: string;
+}
+
+export interface SchoolEvidenceTimelineEntry {
+  date: string;
+  timestamp: string;
+  event: string;
+  phase: string;
+  detail: string;
+}
+
+export interface SchoolIntelligenceOverview {
+  school_id: string;
+  school_name: string;
+  academic_session: string;
+  last_updated: string;
+  total_students: number;
+  assessed_students: number;
+  coverage_percentage: number;
+  active_paths_count: number;
+  open_diagnostic_patterns_count: number;
+  intervention_responses_count: number;
+  signals: SchoolSignal[];
+  classrooms_coverage: {
+    class_id: string;
+    class_name: string;
+    teacher_name: string;
+    total_students: number;
+    assessed_count: number;
+    coverage_percentage: number;
+    open_patterns_count: number;
+    interventions_count: number;
+    post_evidence_count: number;
+    status: string;
+  }[];
+  skills_landscape: {
+    literacy: {
+      skill_id: string;
+      skill_title: string;
+      demonstrated: number;
+      emerging: number;
+      not_yet: number;
+      not_assessed: number;
+    }[];
+    numeracy: {
+      skill_id: string;
+      skill_title: string;
+      demonstrated: number;
+      emerging: number;
+      not_yet: number;
+      not_assessed: number;
+    }[];
+  };
+  evidence_trends: {
+    period: string;
+    coverage_pct: number;
+    assessed: number;
+    interventions_active: number;
+  }[];
+  intervention_landscape: {
+    total_interventions_recorded: number;
+    progress_observed: number;
+    partial_response: number;
+    continued_difficulty: number;
+    insufficient_evidence: number;
+    focal_distributions: {
+      focus: string;
+      count: number;
+      progress_rate: number;
+    }[];
+  };
+  positive_patterns: InstructionalPattern[];
+  timeline: SchoolEvidenceTimelineEntry[];
 }
 
 export const api = new ApiService();
